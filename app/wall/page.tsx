@@ -1,3 +1,5 @@
+import { sharedMoments } from '@/lib/moments';
+
 'use client';
 import { useEffect, useState } from 'react';
 
