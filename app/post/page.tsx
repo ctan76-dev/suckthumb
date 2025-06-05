@@ -1,50 +1,52 @@
-'use client'
+'use client';
 
-import { useState } from 'react'
-import { supabase } from '@/lib/supabase/client';
+import { useState } from 'react';
+import { supabase } from '@/lib/supabaseClient';
+import { useRouter } from 'next/navigation';
 
-
-
-export default function PostPage() {
-  const [content, setContent] = useState('')
-  const [isSubmitting, setIsSubmitting] = useState(false)
+export default function SubmitMomentPage() {
+  const [content, setContent] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsSubmitting(true)
+    e.preventDefault();
 
-    const { error } = await supabase.from('moments').insert({ content })
+    if (!content.trim()) return;
+
+    setIsSubmitting(true);
+
+    const { data, error } = await supabase.from('moments').insert([{ content }]);
 
     if (error) {
-      alert('Error posting moment: ' + error.message)
+      alert('Something went wrong: ' + error.message);
     } else {
-      alert('Moment posted!')
-      setContent('')
+      setContent('');
+      router.push('/wall'); // Redirect to the wall after posting
     }
 
-    setIsSubmitting(false)
-  }
+    setIsSubmitting(false);
+  };
 
   return (
-    <div className="max-w-xl mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">📝 Post a Moment</h1>
-      <form onSubmit={handleSubmit}>
+    <main className="max-w-xl mx-auto px-4 py-8">
+      <h1 className="text-2xl font-bold mb-4">Share Your Suck Thumb Moment</h1>
+      <form onSubmit={handleSubmit} className="space-y-4">
         <textarea
-          className="w-full border border-gray-300 rounded p-2 mb-4"
-          placeholder="Share your suck thumb moment..."
-          rows={4}
           value={content}
           onChange={(e) => setContent(e.target.value)}
-          required
-        />
+          placeholder="What happened? What did you feel? Write it out..."
+          className="w-full p-3 border rounded-md shadow"
+          rows={6}
+        ></textarea>
         <button
           type="submit"
           disabled={isSubmitting}
-          className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
         >
-          {isSubmitting ? 'Posting...' : 'Post'}
+          {isSubmitting ? 'Submitting...' : 'Post Moment'}
         </button>
       </form>
-    </div>
-  )
+    </main>
+  );
 }
