@@ -1,58 +1,48 @@
-import { supabase } from '@/lib/supabaseClient'
-import { sharedMoments } from '@/lib/moments';
+'use client'
 
-'use client';
-import { useState } from 'react';
+import { useState } from 'react'
+import { supabase } from '@/lib/supabaseClient'
 
 export default function PostPage() {
-  const [story, setStory] = useState('');
-  const [submitted, setSubmitted] = useState(false);
+  const [content, setContent] = useState('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault()
+    e.preventDefault()
+    setIsSubmitting(true)
 
-  const form = e.currentTarget as HTMLFormElement
-  const formData = new FormData(form)
-  const content = formData.get('content')?.toString().trim()
+    const { error } = await supabase.from('moments').insert({ content })
 
-  if (!content) return
+    if (error) {
+      alert('Error posting moment: ' + error.message)
+    } else {
+      alert('Moment posted!')
+      setContent('')
+    }
 
-  const { error } = await supabase.from('moments').insert({ content })
-
-  if (error) {
-    alert('Failed to save moment!')
-    console.error(error)
-  } else {
-    alert('Moment posted!')
-    form.reset()
+    setIsSubmitting(false)
   }
-}
-
 
   return (
-    <main className="max-w-xl mx-auto p-6">
-      <h1 className="text-2xl font-bold mb-4">Post Your Suck Thumb Moment</h1>
-      {submitted && (
-        <p className="text-green-600 mb-4">
-          ✅ Thanks for sharing! You're not alone.
-        </p>
-      )}
+    <div className="max-w-xl mx-auto p-4">
+      <h1 className="text-2xl font-bold mb-4">📝 Post a Moment</h1>
       <form onSubmit={handleSubmit}>
         <textarea
-          className="w-full p-3 border rounded-md mb-4"
-          rows={6}
-          placeholder="Share your moment here..."
-          value={story}
-          onChange={(e) => setStory(e.target.value)}
+          className="w-full border border-gray-300 rounded p-2 mb-4"
+          placeholder="Share your suck thumb moment..."
+          rows={4}
+          value={content}
+          onChange={(e) => setContent(e.target.value)}
           required
         />
         <button
           type="submit"
-          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+          disabled={isSubmitting}
+          className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
         >
-          Submit
+          {isSubmitting ? 'Posting...' : 'Post'}
         </button>
       </form>
-    </main>
-  );
+    </div>
+  )
 }
