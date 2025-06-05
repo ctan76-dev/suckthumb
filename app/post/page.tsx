@@ -1,3 +1,5 @@
+import { sharedMoments } from '@/lib/moments';
+
 'use client';
 import { useState } from 'react';
 
@@ -6,11 +8,14 @@ export default function PostPage() {
   const [submitted, setSubmitted] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    console.log('Submitted story:', story);
-    setSubmitted(true);
-    setStory('');
-  };
+  e.preventDefault();
+
+  // Save to memory (add story to the top of the list)
+  sharedMoments.unshift(story);
+
+  setSubmitted(true);
+  setStory('');
+};
 
   return (
     <main className="max-w-xl mx-auto p-6">
