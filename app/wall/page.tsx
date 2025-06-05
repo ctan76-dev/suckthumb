@@ -1,6 +1,3 @@
-import { supabase } from '@/lib/supabaseClient'
-import { sharedMoments } from '@/lib/moments';
-
 'use client'
 
 import { useEffect, useState } from 'react'
