@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { createClient } from '@/lib/supabase/client'; // Your Supabase client path
+import { createClient } from '@/lib/supabase/client';
+
 
 export default function WallPage() {
   const supabase = createClient(); // initialize client
