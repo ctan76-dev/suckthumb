@@ -8,15 +8,26 @@ export default function PostPage() {
   const [story, setStory] = useState('');
   const [submitted, setSubmitted] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
-  e.preventDefault();
+  const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault()
 
-  // Save to memory (add story to the top of the list)
-  sharedMoments.unshift(story);
+  const form = e.currentTarget as HTMLFormElement
+  const formData = new FormData(form)
+  const content = formData.get('content')?.toString().trim()
 
-  setSubmitted(true);
-  setStory('');
-};
+  if (!content) return
+
+  const { error } = await supabase.from('moments').insert({ content })
+
+  if (error) {
+    alert('Failed to save moment!')
+    console.error(error)
+  } else {
+    alert('Moment posted!')
+    form.reset()
+  }
+}
+
 
   return (
     <main className="max-w-xl mx-auto p-6">
