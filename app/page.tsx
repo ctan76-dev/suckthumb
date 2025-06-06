@@ -1,16 +1,43 @@
 // app/page.tsx
+'use client';
+
+import { useEffect, useState } from 'react';
+import { supabase } from '@/lib/supabase/client';
+
 export default function HomePage() {
+  const [posts, setPosts] = useState<
+    { id: string; title: string; content: string }[]
+  >([]);
+
+  useEffect(() => {
+    const fetchPosts = async () => {
+      const { data, error } = await supabase
+        .from('posts')
+        .select('id, title, content')
+        .order('created_at', { ascending: false });
+
+      if (error) console.error('Error fetching posts:', error);
+      else setPosts(data || []);
+    };
+
+    fetchPosts();
+  }, []);
+
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center p-12">
-      <h1 className="text-4xl font-bold mb-4">Welcome to SuckThumb</h1>
-      <p className="text-lg mb-6">Share stories. Heal. Connect.</p>
-      <a
-        href="/submit"
-        className="px-6 py-3 bg-blue-600 text-white rounded-full shadow hover:bg-blue-700 transition"
-      >
-        Post Your Story
-      </a>
+    <main className="p-6">
+      <h1 className="text-3xl font-bold mb-4">Latest Posts</h1>
+      {posts.length === 0 ? (
+        <p>No posts found.</p>
+      ) : (
+        <ul className="space-y-4">
+          {posts.map((post) => (
+            <li key={post.id} className="p-4 bg-gray-100 rounded shadow">
+              <h2 className="text-xl font-semibold">{post.title}</h2>
+              <p>{post.content}</p>
+            </li>
+          ))}
+        </ul>
+      )}
     </main>
   );
 }
-
