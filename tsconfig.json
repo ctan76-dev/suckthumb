@@ -1,9 +1,13 @@
 {
   "compilerOptions": {
-    "jsx": "preserve",               // Or "react-jsx" if you're using React 17+
+    "jsx": "preserve", // Or "react-jsx" if you're using React 17+
     "module": "esnext",
     "target": "es5",
-    "lib": ["dom", "dom.iterable", "esnext"],
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "esnext"
+    ],
     "allowJs": true,
     "skipLibCheck": true,
     "esModuleInterop": true,
@@ -12,8 +16,20 @@
     "isolatedModules": true,
     "noEmit": true,
     "incremental": true,
-    "strict": true
+    "strict": true,
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ]
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx"],
-  "exclude": ["node_modules"]
+  "include": [
+    "**/*.ts",
+    "**/*.tsx",
+    "next-env.d.ts",
+    ".next/types/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
 }
