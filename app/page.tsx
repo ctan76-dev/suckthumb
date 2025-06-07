@@ -55,11 +55,12 @@ export default function HomePage() {
             {new Date(post.created_at).toLocaleString()}
           </p>
           <button
-            onClick={() => handleLike(post.id)}
-            className="mt-2 px-3 py-1 text-white bg-blue-600 rounded hover:bg-blue-700 text-sm"
-          >
-            ❤️ {post.likes}
-          </button>
+  onClick={() => handleLike(post.id, post.likes)}
+  className="text-blue-500 hover:text-blue-700"
+>
+  ❤️ {post.likes}
+</button>
+
         </div>
       ))}
     </main>
