@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase/client';
 import moment from 'moment';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
+import { Trash } from 'lucide-react';
 
 type Post = {
   id: string;
@@ -17,7 +18,6 @@ export default function Home() {
   const [posts, setPosts] = useState<Post[]>([]);
   const [newPost, setNewPost] = useState('');
 
-  // Load posts
   const fetchPosts = async () => {
     const { data, error } = await supabase
       .from('moments')
@@ -35,7 +35,6 @@ export default function Home() {
     fetchPosts();
   }, []);
 
-  // Add new post
   const handleSubmit = async () => {
     if (!newPost.trim()) return;
 
@@ -54,7 +53,6 @@ export default function Home() {
     }
   };
 
-  // Like a post
   const handleLike = async (id: string) => {
     const { error } = await supabase.rpc('increment_likes', { row_id: id });
 
@@ -70,7 +68,6 @@ export default function Home() {
     );
   };
 
-  // Delete a post
   const handleDelete = async (id: string) => {
     const confirmed = confirm('Are you sure you want to delete this post?');
     if (!confirmed) return;
@@ -114,7 +111,7 @@ export default function Home() {
             <p className="text-gray-800 whitespace-pre-line">{post.text}</p>
             <div className="flex justify-between items-center mt-2 text-sm text-gray-500">
               <span>{moment(post.created_at).format('DD/MM/YYYY, HH:mm:ss')}</span>
-              <div>
+              <div className="flex items-center gap-2">
                 <Button
                   variant="ghost"
                   className="text-red-500"
@@ -123,11 +120,10 @@ export default function Home() {
                   ❤️ {post.likes}
                 </Button>
                 <Button
-                  variant="destructive"
-                  className="ml-2"
+                  variant="ghost"
                   onClick={() => handleDelete(post.id)}
                 >
-                  Delete
+                  <Trash className="h-4 w-4 text-gray-500 hover:text-red-500" />
                 </Button>
               </div>
             </div>
