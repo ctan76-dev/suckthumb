@@ -10,18 +10,22 @@ export default function HomePage() {
   >([]);
 
   useEffect(() => {
-    const fetchPosts = async () => {
-      const { data, error } = await supabase
-        .from('posts')
-        .select('id, title, content')
-        .order('created_at', { ascending: false });
+  const fetchPosts = async () => {
+    const { data, error } = await supabase
+      .from('posts')
+      .select('*')
+      .order('created_at', { ascending: false });
 
-      if (error) console.error('Error fetching posts:', error);
-      else setPosts(data || []);
-    };
+    console.log('Data:', data);
+    console.log('Error:', error);
 
-    fetchPosts();
-  }, []);
+    if (error) console.error('Error fetching posts:', error);
+    else setPosts(data || []);
+  };
+
+  fetchPosts();
+}, []);
+
 
   return (
     <main className="p-6">
