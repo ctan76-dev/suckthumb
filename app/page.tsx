@@ -12,7 +12,7 @@ export default function HomePage() {
   useEffect(() => {
   const fetchPosts = async () => {
     const { data, error } = await supabase
-      .from('posts')
+      .from('moments')
       .select('*')
       .order('created_at', { ascending: false });
 
