@@ -61,15 +61,29 @@ export default function HomePage() {
         <p>No moments yet.</p>
       ) : (
         <ul className="space-y-4">
-          {posts.map((post) => (
-            <li key={post.id} className="border p-4 rounded">
-              <p>{post.text}</p>
-              <p className="text-sm text-gray-500">
-                {new Date(post.created_at).toLocaleString()}
-              </p>
-            </li>
-          ))}
-        </ul>
+  {posts.map((post) => (
+    <li key={post.id} className="border p-4 rounded">
+      <p>{post.text}</p>
+      <p className="text-sm text-gray-500">
+        {new Date(post.created_at).toLocaleString()}
+      </p>
+      <button
+        onClick={async () => {
+          const { error } = await supabase.from('moments').delete().eq('id', post.id);
+          if (error) {
+            console.error('Delete error:', error);
+          } else {
+            setPosts((prev) => prev.filter((p) => p.id !== post.id));
+          }
+        }}
+        className="mt-2 text-red-500 text-sm hover:underline"
+      >
+        Delete
+      </button>
+    </li>
+  ))}
+</ul>
+
       )}
     </main>
   );
