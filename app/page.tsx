@@ -42,17 +42,20 @@ export default function Home() {
   };
 
   const handleLike = async (id: string, currentLikes: number) => {
-    const { error } = await supabase
-      .from('moments')
-      .update({ likes: currentLikes + 1 })
-      .eq('id', id);
+  console.log('Liking post', id, 'Current likes:', currentLikes);
 
-    if (error) {
-      console.error('Error updating like:', error);
-    } else {
-      fetchPosts();
-    }
-  };
+  const { error } = await supabase
+    .from('moments')
+    .update({ likes: currentLikes + 1 })
+    .eq('id', id);
+
+  if (error) {
+    console.error('Error updating like:', error);
+    alert('Failed to update like!');
+  } else {
+    fetchPosts();
+  }
+};
 
   const handleDelete = async (id: string) => {
     const { error } = await supabase.from('moments').delete().eq('id', id);
