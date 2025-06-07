@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase/client';
+import moment from 'moment';
 
 type Post = {
   id: string;
@@ -21,39 +22,41 @@ export default function Home() {
       .order('created_at', { ascending: false });
 
     if (error) {
-      console.error('Error fetching posts:', error.message);
+      console.error('Error fetching posts:', error);
     } else {
-      setPosts(data as Post[]);
+      setPosts(data || []);
     }
   };
 
-  const addPost = async () => {
+  const handleSubmit = async () => {
     if (!newPost.trim()) return;
 
-    const { error } = await supabase.from('moments').insert([{ text: newPost }]);
+    const { error } = await supabase.from('moments').insert({ text: newPost });
+
     if (error) {
-      console.error('Error adding post:', error.message);
+      console.error('Error creating post:', error);
     } else {
       setNewPost('');
       fetchPosts();
     }
   };
 
-  const likePost = async (id: string) => {
+  const handleLike = async (id: string) => {
     const { error } = await supabase.rpc('increment_likes', { row_id: id });
     if (error) {
-      console.error('Error liking post:', error.message);
+      console.error('Error incrementing likes:', error);
     } else {
       fetchPosts();
     }
   };
 
-  const deletePost = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this post?')) return;
+  const handleDelete = async (id: string) => {
+    const confirmed = confirm('Delete this post?');
+    if (!confirmed) return;
 
     const { error } = await supabase.from('moments').delete().eq('id', id);
     if (error) {
-      console.error('Error deleting post:', error.message);
+      console.error('Error deleting post:', error);
     } else {
       fetchPosts();
     }
@@ -64,42 +67,41 @@ export default function Home() {
   }, []);
 
   return (
-    <main className="p-4 max-w-xl mx-auto space-y-4">
-      <h1 className="text-2xl font-bold">Moments from Supabase</h1>
+    <main className="max-w-xl mx-auto p-4">
+      <h1 className="text-2xl font-bold mb-4">Moments from Supabase</h1>
 
-      <div className="flex gap-2">
-        <input
-          className="flex-1 border px-2 py-1"
-          placeholder="Write your moment..."
+      <div className="mb-6">
+        <textarea
+          className="w-full border p-2 rounded mb-2"
+          rows={3}
           value={newPost}
           onChange={(e) => setNewPost(e.target.value)}
+          placeholder="What's on your mind?"
         />
-        <button className="bg-blue-500 text-white px-4 py-1" onClick={addPost}>
+        <button
+          className="bg-blue-500 text-white px-4 py-2 rounded"
+          onClick={handleSubmit}
+        >
           Post
         </button>
       </div>
 
-      {posts.length === 0 && <p className="text-gray-500">No posts yet.</p>}
-
-      <ul className="space-y-4">
-        {posts.map((post) => (
-          <li key={post.id} className="border p-3 rounded shadow-sm">
-            <p className="text-lg">{post.text}</p>
-            <p className="text-sm text-gray-500">
-              {new Intl.DateTimeFormat('default', {
-                dateStyle: 'short',
-                timeStyle: 'medium',
-              }).format(new Date(post.created_at))}
-            </p>
-            <div className="mt-2 flex gap-4 items-center">
-              <button onClick={() => likePost(post.id)}>❤️ {post.likes}</button>
-              <button onClick={() => deletePost(post.id)} className="text-red-500">
-                🗑️ Delete
-              </button>
-            </div>
-          </li>
-        ))}
-      </ul>
+      {posts.map((post) => (
+        <div key={post.id} className="border p-4 mb-4 rounded shadow">
+          <p className="mb-2">{post.text}</p>
+          <p className="text-sm text-gray-500 mb-2">
+            {moment(post.created_at).format('DD/MM/YYYY, HH:mm:ss')}
+          </p>
+          <div className="flex items-center space-x-4">
+            <button onClick={() => handleLike(post.id)} className="text-red-500">
+              ❤️ {post.likes ?? 0}
+            </button>
+            <button onClick={() => handleDelete(post.id)} className="text-gray-500">
+              🗑️ Delete
+            </button>
+          </div>
+        </div>
+      ))}
     </main>
   );
 }
