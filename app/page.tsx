@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase/client';
 import moment from 'moment';
+import { v4 as uuidv4 } from 'uuid';
 
 type Post = {
   id: string;
@@ -15,89 +16,100 @@ export default function Home() {
   const [posts, setPosts] = useState<Post[]>([]);
   const [newPost, setNewPost] = useState('');
 
-  const fetchPosts = async () => {
-    const { data, error } = await supabase
-      .from('moments')
-      .select('*')
-      .order('created_at', { ascending: false });
-
-    if (error) {
-      console.error('Error fetching posts:', error);
-    } else {
-      setPosts(data || []);
-    }
-  };
-
-  const handleSubmit = async () => {
-    if (!newPost.trim()) return;
-
-    const { error } = await supabase.from('moments').insert({ text: newPost });
-
-    if (error) {
-      console.error('Error creating post:', error);
-    } else {
-      setNewPost('');
-      fetchPosts();
-    }
-  };
-
-  const handleLike = async (id: string) => {
-    const { error } = await supabase.rpc('increment_likes', { row_id: id });
-    if (error) {
-      console.error('Error incrementing likes:', error);
-    } else {
-      fetchPosts();
-    }
-  };
-
-  const handleDelete = async (id: string) => {
-    const confirmed = confirm('Delete this post?');
-    if (!confirmed) return;
-
-    const { error } = await supabase.from('moments').delete().eq('id', id);
-    if (error) {
-      console.error('Error deleting post:', error);
-    } else {
-      fetchPosts();
-    }
-  };
-
+  // Load all posts from Supabase
   useEffect(() => {
-    fetchPosts();
+    const loadPosts = async () => {
+      const { data } = await supabase
+        .from('moments')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (data) {
+        setPosts(data);
+      }
+    };
+
+    loadPosts();
   }, []);
 
+  // Add new post
+  const handleAdd = async () => {
+    if (!newPost.trim()) return;
+
+    const { data, error } = await supabase
+      .from('moments')
+      .insert([{ id: uuidv4(), text: newPost }])
+      .select();
+
+    if (data) {
+      setPosts((prev) => [data[0], ...prev]);
+      setNewPost('');
+    }
+  };
+
+  // Increment likes via RPC
+  const handleLike = async (id: string) => {
+    const { error } = await supabase.rpc('increment_likes', { row_id: id });
+    if (!error) {
+      setPosts((prev) =>
+        prev.map((post) =>
+          post.id === id ? { ...post, likes: post.likes + 1 } : post
+        )
+      );
+    }
+  };
+
+  // Delete post
+  const handleDelete = async (id: string) => {
+    const confirm = window.confirm('Are you sure you want to delete this post?');
+    if (!confirm) return;
+
+    const { error } = await supabase.from('moments').delete().eq('id', id);
+    if (!error) {
+      setPosts((prev) => prev.filter((post) => post.id !== id));
+    }
+  };
+
   return (
-    <main className="max-w-xl mx-auto p-4">
+    <main className="p-4 max-w-xl mx-auto">
       <h1 className="text-2xl font-bold mb-4">Moments from Supabase</h1>
 
-      <div className="mb-6">
-        <textarea
-          className="w-full border p-2 rounded mb-2"
-          rows={3}
+      <div className="flex gap-2 mb-4">
+        <input
+          type="text"
           value={newPost}
           onChange={(e) => setNewPost(e.target.value)}
-          placeholder="What's on your mind?"
+          placeholder="Share your moment..."
+          className="flex-1 border p-2 rounded"
         />
-        <button
-          className="bg-blue-500 text-white px-4 py-2 rounded"
-          onClick={handleSubmit}
-        >
+        <button onClick={handleAdd} className="bg-blue-500 text-white px-4 py-2 rounded">
           Post
         </button>
       </div>
 
       {posts.map((post) => (
-        <div key={post.id} className="border p-4 mb-4 rounded shadow">
-          <p className="mb-2">{post.text}</p>
-          <p className="text-sm text-gray-500 mb-2">
+        <div
+          key={post.id}
+          className="border rounded p-4 mb-4 shadow-sm bg-white"
+        >
+          <p className="text-gray-800">{post.text}</p>
+          <p className="text-sm text-gray-500 mt-2">
             {moment(post.created_at).format('DD/MM/YYYY, HH:mm:ss')}
           </p>
-          <div className="flex items-center space-x-4">
-            <button onClick={() => handleLike(post.id)} className="text-red-500">
-              ❤️ {post.likes ?? 0}
+          <div className="flex items-center gap-4 mt-2">
+            <button
+              onClick={() => handleLike(post.id)}
+              className="text-red-500 text-xl"
+              title="Like"
+            >
+              ❤️ {post.likes}
             </button>
-            <button onClick={() => handleDelete(post.id)} className="text-gray-500">
-              🗑️ Delete
+            <button
+              onClick={() => handleDelete(post.id)}
+              className="text-gray-500 text-sm"
+              title="Delete"
+            >
+              🗑️
             </button>
           </div>
         </div>
