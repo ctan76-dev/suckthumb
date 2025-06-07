@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase/client';
 import moment from 'moment';
-import { v4 as uuidv4 } from 'uuid';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 
@@ -18,96 +17,123 @@ export default function Home() {
   const [posts, setPosts] = useState<Post[]>([]);
   const [newPost, setNewPost] = useState('');
 
+  // Load posts
+  const fetchPosts = async () => {
+    const { data, error } = await supabase
+      .from('moments')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Error loading posts:', error);
+    } else {
+      setPosts(data as Post[]);
+    }
+  };
+
   useEffect(() => {
     fetchPosts();
   }, []);
 
-  const fetchPosts = async () => {
-    const { data } = await supabase
-      .from('moments')
-      .select('*')
-      .order('created_at', { ascending: false });
-    if (data) setPosts(data);
-  };
-
+  // Add new post
   const handleSubmit = async () => {
     if (!newPost.trim()) return;
-    const { data, error } = await supabase.from('moments').insert([
+
+    const { error } = await supabase.from('moments').insert([
       {
-        id: uuidv4(),
-        text: newPost,
+        text: newPost.trim(),
         likes: 0,
       },
     ]);
-    if (!error) {
+
+    if (error) {
+      console.error('Error adding post:', error);
+    } else {
       setNewPost('');
       fetchPosts();
     }
   };
 
+  // Like a post
   const handleLike = async (id: string) => {
-    await supabase.rpc('increment_likes', { row_id: id });
-    fetchPosts();
+    const { error } = await supabase.rpc('increment_likes', { row_id: id });
+
+    if (error) {
+      console.error('Error liking post:', error);
+      return;
+    }
+
+    setPosts(prev =>
+      prev.map(post =>
+        post.id === id ? { ...post, likes: post.likes + 1 } : post
+      )
+    );
   };
 
+  // Delete a post
   const handleDelete = async (id: string) => {
-    const confirmDelete = confirm('Are you sure you want to delete this moment?');
-    if (confirmDelete) {
-      await supabase.from('moments').delete().eq('id', id);
-      fetchPosts();
+    const confirmed = confirm('Are you sure you want to delete this post?');
+    if (!confirmed) return;
+
+    const { error } = await supabase.from('moments').delete().eq('id', id);
+
+    if (error) {
+      console.error('Delete error:', error);
+      return;
     }
+
+    setPosts(prev => prev.filter(post => post.id !== id));
   };
 
   return (
-    <main className="max-w-2xl mx-auto p-4 space-y-8">
-      <section className="text-center space-y-4">
-        <h1 className="text-3xl font-bold">Suck Thumb? Share Lah.</h1>
-        <p className="text-gray-600">
-          Got rejected, missed a chance, kena scolded?
-          <br />
-          Don't just suck thumb. Bend it here — rant, laugh, or heal.
+    <main className="max-w-xl mx-auto p-4 space-y-6">
+      <div className="bg-blue-50 p-4 rounded-xl shadow text-center">
+        <h1 className="text-xl font-semibold">Suck Thumb? Share Lah.</h1>
+        <p className="text-gray-700 mt-2">
+          Got rejected, missed a chance, kena scolded? Don&apos;t just suck thumb.
+          Bend it here — rant, laugh, or heal.
         </p>
-        <div className="flex justify-center gap-4">
-          <Button onClick={handleSubmit} variant="default">
-            🔵 Share Your Story
-          </Button>
-          <Button variant="secondary" onClick={fetchPosts}>
-            🔵 Read Stories
-          </Button>
+        <div className="mt-4 flex justify-center gap-4">
+          <Button onClick={handleSubmit}>🔵 Share Your Story</Button>
+          <Button variant="secondary" onClick={fetchPosts}>🔵 Read Stories</Button>
         </div>
-        <Textarea
-          placeholder="What’s your moment?"
-          value={newPost}
-          onChange={(e) => setNewPost(e.target.value)}
-        />
-      </section>
+      </div>
 
-      <section className="space-y-6">
-        <h2 className="text-xl font-semibold">Moments from Supabase</h2>
-        {posts.length === 0 ? (
-          <p className="text-gray-500">No moments yet.</p>
-        ) : (
-          posts.map((post) => (
-            <div
-              key={post.id}
-              className="border rounded-xl p-4 bg-white shadow-sm space-y-2"
-            >
-              <p className="text-lg">{post.text}</p>
-              <div className="flex items-center justify-between text-sm text-gray-500">
-                <span>{moment(post.created_at).format('DD/MM/YYYY, HH:mm:ss')}</span>
-                <div className="flex items-center gap-4">
-                  <button onClick={() => handleLike(post.id)} className="hover:text-red-500">
-                    ❤️ {post.likes}
-                  </button>
-                  <button onClick={() => handleDelete(post.id)} className="hover:text-red-500">
-                    🗑️
-                  </button>
-                </div>
+      <Textarea
+        value={newPost}
+        onChange={(e) => setNewPost(e.target.value)}
+        placeholder="What happened today?"
+      />
+
+      <div className="space-y-4">
+        {posts.map((post) => (
+          <div
+            key={post.id}
+            className="bg-white p-4 rounded-xl shadow border"
+          >
+            <p className="text-gray-800 whitespace-pre-line">{post.text}</p>
+            <div className="flex justify-between items-center mt-2 text-sm text-gray-500">
+              <span>{moment(post.created_at).format('DD/MM/YYYY, HH:mm:ss')}</span>
+              <div>
+                <Button
+                  variant="ghost"
+                  className="text-red-500"
+                  onClick={() => handleLike(post.id)}
+                >
+                  ❤️ {post.likes}
+                </Button>
+                <Button
+                  variant="destructive"
+                  className="ml-2"
+                  onClick={() => handleDelete(post.id)}
+                >
+                  Delete
+                </Button>
               </div>
             </div>
-          ))
-        )}
-      </section>
+          </div>
+        ))}
+      </div>
     </main>
   );
 }
