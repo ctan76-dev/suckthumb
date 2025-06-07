@@ -22,20 +22,16 @@ export default function Home() {
     fetchPosts();
   }, []);
 
-  async function fetchPosts() {
-    const { data, error } = await supabase
+  const fetchPosts = async () => {
+    const { data } = await supabase
       .from('moments')
       .select('*')
       .order('created_at', { ascending: false });
+    if (data) setPosts(data);
+  };
 
-    if (data) setPosts(data as Post[]);
-    if (error) console.error('Fetch error:', error.message);
-  }
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  const handleSubmit = async () => {
     if (!newPost.trim()) return;
-
     const { data, error } = await supabase.from('moments').insert([
       {
         id: uuidv4(),
@@ -43,89 +39,75 @@ export default function Home() {
         likes: 0,
       },
     ]);
-
     if (!error) {
       setNewPost('');
       fetchPosts();
-    } else {
-      console.error('Insert error:', error.message);
     }
-  }
+  };
 
-  async function handleLike(id: string) {
-    const { error } = await supabase.rpc('increment_likes', { row_id: id });
-    if (!error) fetchPosts();
-    else console.error('Like error:', error.message);
-  }
+  const handleLike = async (id: string) => {
+    await supabase.rpc('increment_likes', { row_id: id });
+    fetchPosts();
+  };
 
-  async function handleDelete(id: string) {
-    if (!confirm('Are you sure you want to delete this moment?')) return;
-    const { error } = await supabase.from('moments').delete().eq('id', id);
-    if (!error) fetchPosts();
-    else console.error('Delete error:', error.message);
-  }
+  const handleDelete = async (id: string) => {
+    const confirmDelete = confirm('Are you sure you want to delete this moment?');
+    if (confirmDelete) {
+      await supabase.from('moments').delete().eq('id', id);
+      fetchPosts();
+    }
+  };
 
   return (
-    <main className="max-w-xl mx-auto p-6 space-y-6">
-
-      {/* Hero Section */}
-      <div className="bg-blue-50 p-6 rounded-xl shadow mb-6 text-center space-y-4">
-        <h1 className="text-2xl font-bold text-blue-800">Suck Thumb? Share Lah.</h1>
-        <p className="text-gray-700">
-          Got rejected, missed a chance, kena scolded? <br />
+    <main className="max-w-2xl mx-auto p-4 space-y-8">
+      <section className="text-center space-y-4">
+        <h1 className="text-3xl font-bold">Suck Thumb? Share Lah.</h1>
+        <p className="text-gray-600">
+          Got rejected, missed a chance, kena scolded?
+          <br />
           Don't just suck thumb. Bend it here — rant, laugh, or heal.
         </p>
         <div className="flex justify-center gap-4">
-          <Button className="bg-blue-600 hover:bg-blue-700 text-white text-lg px-6 py-2 rounded-full shadow">
+          <Button onClick={handleSubmit} variant="default">
             🔵 Share Your Story
           </Button>
-          <Button variant="outline" className="text-blue-600 border-blue-600 text-lg px-6 py-2 rounded-full shadow">
+          <Button variant="secondary" onClick={fetchPosts}>
             🔵 Read Stories
           </Button>
         </div>
-      </div>
-
-      {/* New Post Form */}
-      <form onSubmit={handleSubmit} className="space-y-4">
         <Textarea
-          placeholder="What’s on your mind?"
+          placeholder="What’s your moment?"
           value={newPost}
           onChange={(e) => setNewPost(e.target.value)}
         />
-        <Button type="submit" className="w-full">
-          Submit
-        </Button>
-      </form>
+      </section>
 
-      {/* Posts List */}
-      {posts.length > 0 ? (
-        <div className="space-y-4">
-          {posts.map((post) => (
+      <section className="space-y-6">
+        <h2 className="text-xl font-semibold">Moments from Supabase</h2>
+        {posts.length === 0 ? (
+          <p className="text-gray-500">No moments yet.</p>
+        ) : (
+          posts.map((post) => (
             <div
               key={post.id}
-              className="bg-white p-4 rounded-xl shadow space-y-2"
+              className="border rounded-xl p-4 bg-white shadow-sm space-y-2"
             >
-              <p className="text-gray-900 whitespace-pre-line">{post.text}</p>
-              <div className="flex justify-between items-center text-sm text-gray-600">
+              <p className="text-lg">{post.text}</p>
+              <div className="flex items-center justify-between text-sm text-gray-500">
                 <span>{moment(post.created_at).format('DD/MM/YYYY, HH:mm:ss')}</span>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-4">
                   <button onClick={() => handleLike(post.id)} className="hover:text-red-500">
                     ❤️ {post.likes}
                   </button>
-                  <button
-                    onClick={() => handleDelete(post.id)}
-                    className="text-red-600 hover:underline"
-                  >
-                    Delete
+                  <button onClick={() => handleDelete(post.id)} className="hover:text-red-500">
+                    🗑️
                   </button>
                 </div>
               </div>
             </div>
-          ))}
-        </div>
-      ) : (
-        <p className="text-center text-gray-500">No moments yet. Be the first to share!</p>
-      )}
+          ))
+        )}
+      </section>
     </main>
   );
 }
