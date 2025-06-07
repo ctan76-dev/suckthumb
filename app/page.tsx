@@ -16,93 +16,83 @@ export default function Home() {
   const [newPost, setNewPost] = useState('');
 
   const fetchPosts = async () => {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('moments')
       .select('*')
       .order('created_at', { ascending: false });
-    setPosts(data || []);
+
+    if (!error && data) {
+      setPosts(data);
+    }
   };
 
   useEffect(() => {
     fetchPosts();
   }, []);
 
-  const handlePost = async () => {
+  const handleSubmit = async () => {
     if (!newPost.trim()) return;
-    await supabase.from('moments').insert({ text: newPost, likes: 0 });
-    setNewPost('');
-    fetchPosts();
-  };
 
-  const handleLike = async (id: string, currentLikes: number) => {
-    const { error } = await supabase
-      .from('moments')
-      .update({ likes: currentLikes + 1 })
-      .eq('id', id);
-
-    if (error) {
-      console.error('Error updating like:', error);
-      alert('Failed to update like!');
-    } else {
+    const { error } = await supabase.from('moments').insert([{ text: newPost }]);
+    if (!error) {
+      setNewPost('');
       fetchPosts();
     }
   };
 
+  const handleLike = async (id: string) => {
+    await supabase.rpc('increment_likes', { row_id: id });
+    fetchPosts(); // Refresh after liking
+  };
+
   const handleDelete = async (id: string) => {
-    const confirm = window.confirm('Delete this moment?');
-    if (!confirm) return;
+    const confirmDelete = confirm('Are you sure you want to delete this post?');
+    if (!confirmDelete) return;
 
     await supabase.from('moments').delete().eq('id', id);
-    fetchPosts();
+    fetchPosts(); // Refresh after deleting
   };
 
   return (
-    <div className="p-6 max-w-xl mx-auto">
-      <h1 className="text-2xl font-bold mb-4">Moments from Supabase</h1>
+    <main className="max-w-xl mx-auto p-4 space-y-6">
+      <h1 className="text-2xl font-bold">Moments from Supabase</h1>
 
-      <div className="mb-6 flex gap-2">
+      <div className="flex space-x-2">
         <input
           type="text"
           value={newPost}
           onChange={(e) => setNewPost(e.target.value)}
-          className="flex-grow border border-gray-300 px-3 py-2 rounded"
-          placeholder="Write a new moment..."
+          placeholder="Write your moment..."
+          className="flex-1 border px-3 py-2 rounded"
         />
-        <button
-          onClick={handlePost}
-          className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-        >
+        <button onClick={handleSubmit} className="bg-blue-500 text-white px-4 py-2 rounded">
           Post
         </button>
       </div>
 
-      <ul className="space-y-4">
-        {posts.map((post) => (
-          <li
-            key={post.id}
-            className="border p-4 rounded shadow flex flex-col gap-2"
-          >
-            <p className="text-lg">{post.text}</p>
-            <div className="text-sm text-gray-500">
-              {moment(post.created_at).format('DD/MM/YYYY, HH:mm:ss')}
-            </div>
-            <div className="flex gap-4 items-center">
-              <button
-                onClick={() => handleLike(post.id, post.likes)}
-                className="flex items-center gap-2 text-red-500"
-              >
-                ❤️ {post.likes}
-              </button>
-              <button
-                onClick={() => handleDelete(post.id)}
-                className="text-sm text-gray-600 hover:text-red-600"
-              >
-                Delete
-              </button>
-            </div>
-          </li>
-        ))}
-      </ul>
-    </div>
+      {posts.map((post) => (
+        <div key={post.id} className="border rounded p-4 shadow">
+          <p className="text-lg">{post.text}</p>
+          <p className="text-gray-400 text-xs mt-1">
+            {moment(post.created_at).format('DD/MM/YYYY, HH:mm:ss')}
+          </p>
+
+          <div className="flex items-center space-x-4 mt-2">
+            <button
+              onClick={() => handleLike(post.id)}
+              className="flex items-center space-x-1 text-red-500"
+            >
+              ❤️ <span>{post.likes ?? 0}</span>
+            </button>
+            <button
+              onClick={() => handleDelete(post.id)}
+              className="text-sm text-red-600 hover:underline"
+            >
+              Delete
+            </button>
+          </div>
+        </div>
+      ))}
+    </main>
   );
 }
