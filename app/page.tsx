@@ -26,18 +26,19 @@ export default function HomePage() {
     }
   };
 
-  const handleLike = async (id: string) => {
-    const { error } = await supabase
-      .from('moments')
-      .update({ likes: supabase.rpc('increment_likes', { row_id: id }) })
-      .eq('id', id);
+  const handleLike = async (id: string, currentLikes: number) => {
+  const { error } = await supabase
+    .from('moments')
+    .update({ likes: currentLikes + 1 })
+    .eq('id', id);
 
-    if (error) {
-      console.error('Error updating like:', error);
-    } else {
-      fetchPosts();
-    }
-  };
+  if (error) {
+    console.error('Error updating like:', error);
+  } else {
+    fetchPosts(); // Refresh the list after like
+  }
+};
+
 
   useEffect(() => {
     fetchPosts();
