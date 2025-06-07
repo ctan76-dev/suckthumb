@@ -3,89 +3,77 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase/client';
 
-interface Moment {
+type Moment = {
   id: string;
   text: string;
   created_at: string;
-}
+  likes: number;
+};
 
 export default function HomePage() {
   const [posts, setPosts] = useState<Moment[]>([]);
-  const [newMoment, setNewMoment] = useState('');
-  const [loading, setLoading] = useState(false);
 
-  const fetchPosts = async () => {
+  useEffect(() => {
+    const fetchPosts = async () => {
+      const { data, error } = await supabase
+        .from('moments')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching posts:', error);
+      } else {
+        setPosts(data || []);
+      }
+    };
+
+    fetchPosts();
+  }, []);
+
+  const handleLike = async (id: string) => {
     const { data, error } = await supabase
+      .from('moments')
+      .update({ likes: supabase.rpc('increment_like', { row_id: id }) }) // This will be fixed below
+      .eq('id', id)
+      .select();
+
+    if (error) {
+      console.error('Error liking post:', error);
+      return;
+    }
+
+    // Refetch posts to update UI
+    const { data: updatedData } = await supabase
       .from('moments')
       .select('*')
       .order('created_at', { ascending: false });
 
-    if (error) console.error('Error fetching posts:', error);
-    else setPosts(data || []);
+    setPosts(updatedData || []);
   };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newMoment.trim()) return;
-
-    setLoading(true);
-    const { error } = await supabase.from('moments').insert({ text: newMoment });
-    if (error) console.error('Insert error:', error);
-    setNewMoment('');
-    await fetchPosts();
-    setLoading(false);
-  };
-
-  useEffect(() => {
-    fetchPosts();
-  }, []);
 
   return (
-    <main className="max-w-xl mx-auto p-4">
+    <main className="p-6 max-w-xl mx-auto">
       <h1 className="text-2xl font-bold mb-4">Moments from Supabase</h1>
-
-      <form onSubmit={handleSubmit} className="mb-6 flex gap-2">
-        <input
-          type="text"
-          value={newMoment}
-          onChange={(e) => setNewMoment(e.target.value)}
-          placeholder="Share your moment..."
-          className="flex-1 p-2 border rounded"
-        />
-        <button type="submit" disabled={loading} className="bg-blue-500 text-white px-4 py-2 rounded">
-          {loading ? 'Posting...' : 'Post'}
-        </button>
-      </form>
-
-      {posts.length === 0 ? (
-        <p>No moments yet.</p>
-      ) : (
-        <ul className="space-y-4">
-  {posts.map((post) => (
-    <li key={post.id} className="border p-4 rounded">
-      <p>{post.text}</p>
-      <p className="text-sm text-gray-500">
-        {new Date(post.created_at).toLocaleString()}
-      </p>
-      <button
-        onClick={async () => {
-          const { error } = await supabase.from('moments').delete().eq('id', post.id);
-          if (error) {
-            console.error('Delete error:', error);
-          } else {
-            setPosts((prev) => prev.filter((p) => p.id !== post.id));
-          }
-        }}
-        className="mt-2 text-red-500 text-sm hover:underline"
-      >
-        Delete
-      </button>
-    </li>
-  ))}
-</ul>
-
-      )}
+      {posts.map((post) => (
+        <div
+          key={post.id}
+          className="border p-4 rounded-lg mb-4 shadow-sm bg-white"
+        >
+          <p className="text-lg">{post.text}</p>
+          <p className="text-sm text-gray-500">
+            {new Date(post.created_at).toLocaleString()}
+          </p>
+          <div className="flex items-center gap-2 mt-2">
+            <button
+              onClick={() => handleLike(post.id)}
+              className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
+            >
+              Like
+            </button>
+            <span>{post.likes} likes</span>
+          </div>
+        </div>
+      ))}
     </main>
   );
 }
-
