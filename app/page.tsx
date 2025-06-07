@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase/client';
-import moment from 'moment';
 
 type Post = {
   id: string;
@@ -21,8 +20,42 @@ export default function Home() {
       .select('*')
       .order('created_at', { ascending: false });
 
-    if (!error && data) {
-      setPosts(data);
+    if (error) {
+      console.error('Error fetching posts:', error.message);
+    } else {
+      setPosts(data as Post[]);
+    }
+  };
+
+  const addPost = async () => {
+    if (!newPost.trim()) return;
+
+    const { error } = await supabase.from('moments').insert([{ text: newPost }]);
+    if (error) {
+      console.error('Error adding post:', error.message);
+    } else {
+      setNewPost('');
+      fetchPosts();
+    }
+  };
+
+  const likePost = async (id: string) => {
+    const { error } = await supabase.rpc('increment_likes', { row_id: id });
+    if (error) {
+      console.error('Error liking post:', error.message);
+    } else {
+      fetchPosts();
+    }
+  };
+
+  const deletePost = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this post?')) return;
+
+    const { error } = await supabase.from('moments').delete().eq('id', id);
+    if (error) {
+      console.error('Error deleting post:', error.message);
+    } else {
+      fetchPosts();
     }
   };
 
@@ -30,69 +63,43 @@ export default function Home() {
     fetchPosts();
   }, []);
 
-  const handleSubmit = async () => {
-    if (!newPost.trim()) return;
-
-    const { error } = await supabase.from('moments').insert([{ text: newPost }]);
-    if (!error) {
-      setNewPost('');
-      fetchPosts();
-    }
-  };
-
-  const handleLike = async (id: string) => {
-    await supabase.rpc('increment_likes', { row_id: id });
-    fetchPosts(); // Refresh after liking
-  };
-
-  const handleDelete = async (id: string) => {
-    const confirmDelete = confirm('Are you sure you want to delete this post?');
-    if (!confirmDelete) return;
-
-    await supabase.from('moments').delete().eq('id', id);
-    fetchPosts(); // Refresh after deleting
-  };
-
   return (
-    <main className="max-w-xl mx-auto p-4 space-y-6">
+    <main className="p-4 max-w-xl mx-auto space-y-4">
       <h1 className="text-2xl font-bold">Moments from Supabase</h1>
 
-      <div className="flex space-x-2">
+      <div className="flex gap-2">
         <input
-          type="text"
+          className="flex-1 border px-2 py-1"
+          placeholder="Write your moment..."
           value={newPost}
           onChange={(e) => setNewPost(e.target.value)}
-          placeholder="Write your moment..."
-          className="flex-1 border px-3 py-2 rounded"
         />
-        <button onClick={handleSubmit} className="bg-blue-500 text-white px-4 py-2 rounded">
+        <button className="bg-blue-500 text-white px-4 py-1" onClick={addPost}>
           Post
         </button>
       </div>
 
-      {posts.map((post) => (
-        <div key={post.id} className="border rounded p-4 shadow">
-          <p className="text-lg">{post.text}</p>
-          <p className="text-gray-400 text-xs mt-1">
-            {moment(post.created_at).format('DD/MM/YYYY, HH:mm:ss')}
-          </p>
+      {posts.length === 0 && <p className="text-gray-500">No posts yet.</p>}
 
-          <div className="flex items-center space-x-4 mt-2">
-            <button
-              onClick={() => handleLike(post.id)}
-              className="flex items-center space-x-1 text-red-500"
-            >
-              ❤️ <span>{post.likes ?? 0}</span>
-            </button>
-            <button
-              onClick={() => handleDelete(post.id)}
-              className="text-sm text-red-600 hover:underline"
-            >
-              Delete
-            </button>
-          </div>
-        </div>
-      ))}
+      <ul className="space-y-4">
+        {posts.map((post) => (
+          <li key={post.id} className="border p-3 rounded shadow-sm">
+            <p className="text-lg">{post.text}</p>
+            <p className="text-sm text-gray-500">
+              {new Intl.DateTimeFormat('default', {
+                dateStyle: 'short',
+                timeStyle: 'medium',
+              }).format(new Date(post.created_at))}
+            </p>
+            <div className="mt-2 flex gap-4 items-center">
+              <button onClick={() => likePost(post.id)}>❤️ {post.likes}</button>
+              <button onClick={() => deletePost(post.id)} className="text-red-500">
+                🗑️ Delete
+              </button>
+            </div>
+          </li>
+        ))}
+      </ul>
     </main>
   );
 }
