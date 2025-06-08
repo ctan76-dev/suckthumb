@@ -1,33 +1,23 @@
-'use client';
+// app/layout.tsx
 
-import './globals.css';             // ← import your Tailwind globals
-import { useState } from 'react';
-import { createBrowserSupabaseClient } from '@supabase/auth-helpers-nextjs';
-import { SessionContextProvider } from '@supabase/auth-helpers-react';
+import './globals.css';
+import { Providers } from './providers';
 
 export const metadata = {
   title: 'Suck Thumb',
   description: 'Share your moments and feel better.',
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
-  // initialize supabase client
-  const [supabaseClient] = useState(() =>
-    createBrowserSupabaseClient({
-      supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      supabaseKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    })
-  );
-
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <html lang="en">
-      <head>
-        {/* you can add more <meta> or <link> tags here */}
-      </head>
+      <head />
       <body className="bg-gray-50 text-gray-900">
-        <SessionContextProvider supabaseClient={supabaseClient}>
-          {children}
-        </SessionContextProvider>
+        <Providers>{children}</Providers>
       </body>
     </html>
   );
