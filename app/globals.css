@@ -1,6 +1,14 @@
-@import "tailwindcss";
+/* app/globals.css */
+
+/* 1) Inject Tailwind’s layers */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* 2) Your other imports */
 @import "tw-animate-css";
 
+/* 3) Your custom variants & design tokens */
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
