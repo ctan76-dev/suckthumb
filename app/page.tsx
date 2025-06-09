@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -68,11 +67,11 @@ export default function HomePage() {
     <main className="max-w-2xl mx-auto p-6 space-y-8">
       {/* Hero with colored background */}
       <section className="bg-purple-50 p-8 rounded-xl shadow-md text-center space-y-4">
-        <h1 className="text-4xl font-bold text-purple-800">Suck Thumb? Share It!</h1>
-        <p className="text-lg text-purple-700">
+        <h1 className="text-4xl font-bold text-[#1877F2]">Suck Thumb? Share It!</h1>
+        <p className="text-lg text-[#1877F2]">
           Got rejected, missed a chance, kena scolded?
         </p>
-        <p className="text-base text-purple-700">
+        <p className="text-base text-[#1877F2]">
           Don’t just suck thumb. Vent it here — rant, laugh, or heal.
         </p>
       </section>
