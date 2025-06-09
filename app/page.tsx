@@ -1,3 +1,4 @@
+// app/page.tsx
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -24,49 +25,57 @@ export default function HomePage() {
       .from('moments')
       .select('*')
       .order('created_at', { ascending: false });
-    if (error) console.error('Error loading posts:', error);
-    else setPosts(data as Post[]);
+    if (error) {
+      console.error('Error loading posts:', error);
+    } else {
+      setPosts(data as Post[]);
+    }
   };
 
   useEffect(() => {
     fetchPosts();
   }, []);
 
-  // Insert a new moment
+  // Add a new moment
   const handleSubmit = async () => {
     if (!newPost.trim()) return;
     const { error } = await supabase
       .from('moments')
       .insert([{ text: newPost.trim(), likes: 0 }]);
-    if (error) console.error('Error adding post:', error);
-    else {
+    if (error) {
+      console.error('Error adding post:', error);
+    } else {
       setNewPost('');
       fetchPosts();
     }
   };
 
-  // Increment likes via RPC
+  // Increment likes
   const handleLike = async (id: string) => {
     const { error } = await supabase.rpc('increment_likes', { row_id: id });
-    if (error) console.error('Error liking post:', error);
-    else fetchPosts();
+    if (error) {
+      console.error('Error liking post:', error);
+    } else {
+      fetchPosts();
+    }
   };
 
   // Delete a moment
   const handleDelete = async (id: string) => {
     if (!confirm('Delete this moment?')) return;
-    const { error } = await supabase
-      .from('moments')
-      .delete()
-      .eq('id', id);
-    if (error) console.error('Error deleting post:', error);
-    else fetchPosts();
+    const { error } = await supabase.from('moments').delete().eq('id', id);
+    if (error) {
+      console.error('Error deleting post:', error);
+    } else {
+      fetchPosts();
+    }
   };
 
   return (
     <main className="max-w-2xl mx-auto p-6 space-y-8">
-      {/* Hero with colored background */}
-      <section className="bg-purple-50 p-8 rounded-xl shadow-md text-center space-y-4">
+
+      {/* Hero Section */}
+      <section className="bg-blue-100 p-8 rounded-xl shadow-md text-center space-y-4">
         <h1 className="text-4xl font-bold text-[#1877F2]">Suck Thumb? Share It!</h1>
         <p className="text-lg text-[#1877F2]">
           Got rejected, missed a chance, kena scolded?
