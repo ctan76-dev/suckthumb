@@ -60,8 +60,8 @@ export default function HomePage() {
 
   return (
     <main className="max-w-2xl mx-auto p-6 space-y-8 font-sans">
-      {/* Hero Section */}
-      <section className="bg-white p-8 rounded-xl shadow-md text-center space-y-4">
+      {/* Hero Section with thin #1414A0 border */}
+      <section className="bg-white p-8 rounded-xl shadow-md text-center space-y-4 border border-[#1414A0]">
         <h1 className="text-4xl font-bold text-[#1414A0]">Suck Thumb? Share It!</h1>
         <p className="text-lg text-[#1414A0]">
           Got rejected, missed a chance, kena scolded?
@@ -70,6 +70,7 @@ export default function HomePage() {
           Don’t just suck thumb. Vent it here — rant, laugh, or heal.
         </p>
       </section>
+
 
       {/* New Moment Form */}
       <section className="space-y-3">
