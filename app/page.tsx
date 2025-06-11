@@ -1,7 +1,10 @@
+// app/page.tsx
 'use client';
 
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase/client';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import moment from 'moment';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -29,9 +32,8 @@ export default function HomePage() {
   };
 
   useEffect(() => {
-  fetchPosts();
+    fetchPosts();
   }, []);
-
 
   // Add a new moment
   const handleSubmit = async () => {
@@ -63,16 +65,8 @@ export default function HomePage() {
 
   return (
     <main className="max-w-2xl mx-auto p-6 space-y-8 font-sans">
-      {/* Hero Section with forced white bg and blue border */}
-      <section
-        className="
-          bg-white !bg-white        /* force white background */
-          border border-[#1414A0]    /* 1px solid #1414A0 */
-          !border-[#1414A0]          /* force border color */
-          p-8 rounded-xl shadow-md 
-          text-center space-y-4
-        "
-      >
+      {/* Hero */}
+      <section className="bg-white p-8 rounded-xl shadow-md text-center space-y-4 border border-[#1414A0]">
         <h1 className="text-4xl font-bold text-[#1414A0]">Suck Thumb? Share It!</h1>
         <p className="text-lg text-[#1414A0]">
           Got rejected, missed a chance, kena scolded?
@@ -81,7 +75,6 @@ export default function HomePage() {
           Don’t just suck thumb. Vent it here — rant, laugh, or heal.
         </p>
       </section>
-
 
       {/* New Moment Form */}
       <section className="space-y-3">
@@ -105,8 +98,11 @@ export default function HomePage() {
         ) : (
           posts.map((post) => (
             <div key={post.id} className="border rounded-lg p-4">
-              <p className="mb-2 text-gray-800">{post.text}</p>
-              <div className="flex justify-between items-center text-sm text-gray-500">
+              {/* Render Markdown (links, lists, bold, etc.) */}
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                {post.text}
+              </ReactMarkdown>
+              <div className="flex justify-between items-center text-sm text-gray-500 mt-2">
                 <span>
                   {moment(post.created_at).format('DD/MM/YYYY, HH:mm:ss')}
                 </span>
@@ -124,5 +120,5 @@ export default function HomePage() {
         )}
       </section>
     </main>
-  );
+);
 }
