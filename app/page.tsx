@@ -28,7 +28,10 @@ export default function HomePage() {
     else setPosts(data as Post[]);
   };
 
-  useEffect(fetchPosts, []);
+  useEffect(() => {
+  fetchPosts();
+  }, []);
+
 
   // Add a new moment
   const handleSubmit = async () => {
