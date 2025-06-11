@@ -2,34 +2,125 @@
 
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase/client';
+import moment from 'moment';
+import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
+import { Trash } from 'lucide-react';
 
-export default function PostPage() {
-  const [posts, setPosts] = useState<any[]>([]);
+type Post = {
+  id: string;
+  text: string;
+  created_at: string;
+  likes: number;
+};
 
+export default function HomePage() {
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [newPost, setNewPost] = useState('');
+
+  // 1) Fetch posts on mount (no async arrow directly in useEffect)
   useEffect(() => {
-    const fetchPosts = async () => {
-      const { data, error } = await supabase.from('posts').select('*').order('created_at', { ascending: false });
-      if (error) {
-        console.error('Error fetching posts:', error);
-      } else {
-        setPosts(data || []);
-      }
+    const load = async () => {
+      const { data, error } = await supabase
+        .from('moments')
+        .select('*')
+        .order('created_at', { ascending: false });
+      if (error) console.error('Error loading posts:', error);
+      else setPosts(data as Post[]);
     };
-
-    fetchPosts();
+    load();
   }, []);
 
+  // 2) Add a new moment
+  const handleSubmit = async () => {
+    if (!newPost.trim()) return;
+    const { error } = await supabase
+      .from('moments')
+      .insert([{ text: newPost.trim(), likes: 0 }]);
+    if (error) console.error('Error adding post:', error);
+    else {
+      setNewPost('');
+      // re-load after insert
+      const { data } = await supabase
+        .from('moments')
+        .select('*')
+        .order('created_at', { ascending: false });
+      setPosts(data as Post[]);
+    }
+  };
+
+  // 3) Like a post
+  const handleLike = async (id: string) => {
+    const { error } = await supabase.rpc('increment_likes', { row_id: id });
+    if (error) console.error('Error liking post:', error);
+    else {
+      setPosts((prev) =>
+        prev.map((p) => (p.id === id ? { ...p, likes: p.likes + 1 } : p))
+      );
+    }
+  };
+
+  // 4) Delete a post
+  const handleDelete = async (id: string) => {
+    if (!confirm('Delete this moment?')) return;
+    const { error } = await supabase.from('moments').delete().eq('id', id);
+    if (error) console.error('Error deleting post:', error);
+    else setPosts((prev) => prev.filter((p) => p.id !== id));
+  };
+
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold mb-4">All Posts</h1>
-      <ul className="space-y-4">
-        {posts.map((post) => (
-          <li key={post.id} className="border p-4 rounded">
-            <p>{post.text}</p>
-            <p className="text-sm text-gray-500">{new Date(post.created_at).toLocaleString()}</p>
-          </li>
-        ))}
-      </ul>
-    </div>
+    <main className="max-w-2xl mx-auto p-6 space-y-8 font-sans">
+      {/* Hero */}
+      <section className="bg-white p-8 rounded-xl shadow-md text-center space-y-4 border border-[#1414A0]">
+        <h1 className="text-4xl font-bold text-[#1414A0]">Suck Thumb? Share It!</h1>
+        <p className="text-lg text-[#1414A0]">
+          Got rejected, missed a chance, kena scolded?
+        </p>
+        <p className="text-base text-[#1414A0]">
+          Don’t just suck thumb. Vent it here — rant, laugh, or heal.
+        </p>
+      </section>
+
+      {/* New Moment Form */}
+      <section className="space-y-3">
+        <Textarea
+          value={newPost}
+          onChange={(e) => setNewPost(e.target.value)}
+          placeholder="What happened today?"
+          className="w-full"
+        />
+        <Button onClick={handleSubmit} className="w-full">
+          Post Your Story
+        </Button>
+      </section>
+
+      {/* Moments List */}
+      <section className="space-y-6">
+        {posts.length === 0 ? (
+          <p className="text-center text-gray-500">
+            No moments yet. Be the first to share!
+          </p>
+        ) : (
+          posts.map((post) => (
+            <div key={post.id} className="border rounded-lg p-4">
+              <p className="mb-2">{post.text}</p>
+              <div className="flex justify-between items-center text-sm text-gray-500">
+                <span>
+                  {moment(post.created_at).format('DD/MM/YYYY, HH:mm:ss')}
+                </span>
+                <div className="flex gap-4">
+                  <Button variant="ghost" onClick={() => handleLike(post.id)}>
+                    ❤️ {post.likes}
+                  </Button>
+                  <Button variant="ghost" onClick={() => handleDelete(post.id)}>
+                    <Trash className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            </div>
+          ))
+        )}
+      </section>
+    </main>
   );
 }
