@@ -60,8 +60,16 @@ export default function HomePage() {
 
   return (
     <main className="max-w-2xl mx-auto p-6 space-y-8 font-sans">
-      {/* Hero Section with thin #1414A0 border */}
-      <section className="bg-white p-8 rounded-xl shadow-md text-center space-y-4 border border-[#1414A0]">
+      {/* Hero Section with forced white bg and blue border */}
+      <section
+        className="
+          bg-white !bg-white        /* force white background */
+          border border-[#1414A0]    /* 1px solid #1414A0 */
+          !border-[#1414A0]          /* force border color */
+          p-8 rounded-xl shadow-md 
+          text-center space-y-4
+        "
+      >
         <h1 className="text-4xl font-bold text-[#1414A0]">Suck Thumb? Share It!</h1>
         <p className="text-lg text-[#1414A0]">
           Got rejected, missed a chance, kena scolded?
