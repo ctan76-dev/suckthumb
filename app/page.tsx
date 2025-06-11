@@ -1,4 +1,3 @@
-// app/page.tsx
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -25,16 +24,11 @@ export default function HomePage() {
       .from('moments')
       .select('*')
       .order('created_at', { ascending: false });
-    if (error) {
-      console.error('Error loading posts:', error);
-    } else {
-      setPosts(data as Post[]);
-    }
+    if (error) console.error('Error loading posts:', error);
+    else setPosts(data as Post[]);
   };
 
-  useEffect(() => {
-    fetchPosts();
-  }, []);
+  useEffect(fetchPosts, []);
 
   // Add a new moment
   const handleSubmit = async () => {
@@ -42,9 +36,8 @@ export default function HomePage() {
     const { error } = await supabase
       .from('moments')
       .insert([{ text: newPost.trim(), likes: 0 }]);
-    if (error) {
-      console.error('Error adding post:', error);
-    } else {
+    if (error) console.error('Error adding post:', error);
+    else {
       setNewPost('');
       fetchPosts();
     }
@@ -53,34 +46,27 @@ export default function HomePage() {
   // Increment likes
   const handleLike = async (id: string) => {
     const { error } = await supabase.rpc('increment_likes', { row_id: id });
-    if (error) {
-      console.error('Error liking post:', error);
-    } else {
-      fetchPosts();
-    }
+    if (error) console.error('Error liking post:', error);
+    else fetchPosts();
   };
 
   // Delete a moment
   const handleDelete = async (id: string) => {
     if (!confirm('Delete this moment?')) return;
     const { error } = await supabase.from('moments').delete().eq('id', id);
-    if (error) {
-      console.error('Error deleting post:', error);
-    } else {
-      fetchPosts();
-    }
+    if (error) console.error('Error deleting post:', error);
+    else fetchPosts();
   };
 
   return (
-    <main className="max-w-2xl mx-auto p-6 space-y-8">
-
+    <main className="max-w-2xl mx-auto p-6 space-y-8 font-sans">
       {/* Hero Section */}
-      <section className="bg-blue-100 p-8 rounded-xl shadow-md text-center space-y-4">
-        <h1 className="text-4xl font-bold text-[#1877F2]">Suck Thumb? Share It!</h1>
-        <p className="text-lg text-[#1877F2]">
+      <section className="bg-white p-8 rounded-xl shadow-md text-center space-y-4">
+        <h1 className="text-4xl font-bold text-[#1414A0]">Suck Thumb? Share It!</h1>
+        <p className="text-lg text-[#1414A0]">
           Got rejected, missed a chance, kena scolded?
         </p>
-        <p className="text-base text-[#1877F2]">
+        <p className="text-base text-[#1414A0]">
           Don’t just suck thumb. Vent it here — rant, laugh, or heal.
         </p>
       </section>
@@ -107,7 +93,7 @@ export default function HomePage() {
         ) : (
           posts.map((post) => (
             <div key={post.id} className="border rounded-lg p-4">
-              <p className="mb-2">{post.text}</p>
+              <p className="mb-2 text-gray-800">{post.text}</p>
               <div className="flex justify-between items-center text-sm text-gray-500">
                 <span>
                   {moment(post.created_at).format('DD/MM/YYYY, HH:mm:ss')}
