@@ -1,4 +1,4 @@
-// app/page.tsx
+// File: app/page.tsx
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -39,7 +39,7 @@ export default function HomePage() {
     setFile(e.target.files?.[0] ?? null);
   };
 
-  // Upload image and get URL
+  // Upload to Supabase Storage
   const uploadImage = async (file: File) => {
     const path = `${Date.now()}_${file.name}`;
     const { data, error } = await supabase.storage
@@ -52,7 +52,7 @@ export default function HomePage() {
     return supabase.storage.from('stories').getPublicUrl(data.path).publicUrl;
   };
 
-  // Submit new moment (with optional image)
+  // Submit new moment
   const handleSubmit = async () => {
     if (!newPost.trim() && !file) return;
     let mediaUrl: string | null = null;
@@ -108,8 +108,8 @@ export default function HomePage() {
           className="w-full"
         />
 
-        {/* Styled file input */}
-        <label className="block">
+        {/* Upload button only visible below md (mobile/tablet) */}
+        <label className="block md:hidden">
           <input
             type="file"
             accept="image/*"
@@ -134,7 +134,7 @@ export default function HomePage() {
           posts.map(post => (
             <div
               key={post.id}
-              className="bg-white border rounded-lg p-4 space-y-4"
+              className="!bg-white border rounded-lg p-4 space-y-4"
             >
               {post.media_url && (
                 <img
