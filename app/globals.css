@@ -125,3 +125,12 @@
     @apply bg-background text-foreground;
   }
 }
+/* app/globals.css */
+
+/* … your existing imports and tokens … */
+
+/* Force white backgrounds on the textarea and each card */
+textarea,
+.moment-card {
+  background-color: #ffffff !important;
+}
