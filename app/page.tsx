@@ -21,7 +21,7 @@ export default function HomePage() {
   const [newPost, setNewPost] = useState('');
   const [file, setFile] = useState<File | null>(null);
 
-  // Fetch latest moments
+  // Load moments on mount
   useEffect(() => {
     const load = async () => {
       const { data, error } = await supabase
@@ -34,36 +34,29 @@ export default function HomePage() {
     load();
   }, []);
 
-  // Handle image selection
+  // Handle file selection
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFile(e.target.files?.[0] ?? null);
   };
 
-  // Upload to Supabase Storage
+  // Upload image and get URL
   const uploadImage = async (file: File) => {
-    const filePath = `${Date.now()}_${file.name}`;
+    const path = `${Date.now()}_${file.name}`;
     const { data, error } = await supabase.storage
       .from('stories')
-      .upload(filePath, file);
+      .upload(path, file);
     if (error) {
       console.error('Upload error:', error);
       return null;
     }
-    const { publicUrl } = supabase.storage
-      .from('stories')
-      .getPublicUrl(data.path);
-    return publicUrl;
+    return supabase.storage.from('stories').getPublicUrl(data.path).publicUrl;
   };
 
-  // Add a new moment
+  // Submit new moment (with optional image)
   const handleSubmit = async () => {
     if (!newPost.trim() && !file) return;
-
     let mediaUrl: string | null = null;
-    if (file) {
-      mediaUrl = await uploadImage(file);
-    }
-
+    if (file) mediaUrl = await uploadImage(file);
     const { error } = await supabase
       .from('moments')
       .insert([{ text: newPost.trim(), media_url: mediaUrl, likes: 0 }]);
@@ -71,7 +64,7 @@ export default function HomePage() {
     else {
       setNewPost('');
       setFile(null);
-      // refresh list
+      // reload
       const { data } = await supabase
         .from('moments')
         .select('*')
@@ -84,11 +77,9 @@ export default function HomePage() {
   const handleLike = async (id: string) => {
     const { error } = await supabase.rpc('increment_likes', { row_id: id });
     if (error) console.error('Error liking post:', error);
-    else {
-      setPosts((prev) =>
-        prev.map((p) => (p.id === id ? { ...p, likes: p.likes + 1 } : p))
-      );
-    }
+    else setPosts(prev =>
+      prev.map(p => (p.id === id ? { ...p, likes: p.likes + 1 } : p))
+    );
   };
 
   // Delete a moment
@@ -96,7 +87,7 @@ export default function HomePage() {
     if (!confirm('Delete this moment?')) return;
     const { error } = await supabase.from('moments').delete().eq('id', id);
     if (error) console.error('Error deleting post:', error);
-    else setPosts((prev) => prev.filter((p) => p.id !== id));
+    else setPosts(prev => prev.filter(p => p.id !== id));
   };
 
   return (
@@ -112,16 +103,24 @@ export default function HomePage() {
       <section className="space-y-3">
         <Textarea
           value={newPost}
-          onChange={(e) => setNewPost(e.target.value)}
+          onChange={e => setNewPost(e.target.value)}
           placeholder="What happened today?"
           className="w-full"
         />
-        <input
-          type="file"
-          accept="image/*"
-          onChange={handleFileChange}
-          className="block w-full text-sm text-gray-500"
-        />
+
+        {/* Styled file input */}
+        <label className="block">
+          <input
+            type="file"
+            accept="image/*"
+            onChange={handleFileChange}
+            className="hidden"
+          />
+          <Button variant="outline" className="w-full">
+            Upload Image
+          </Button>
+        </label>
+
         <Button onClick={handleSubmit} className="w-full">
           Post Your Story
         </Button>
@@ -132,16 +131,15 @@ export default function HomePage() {
         {posts.length === 0 ? (
           <p className="text-center text-gray-500">No moments yet. Be the first to share!</p>
         ) : (
-          posts.map((post) => (
+          posts.map(post => (
             <div
               key={post.id}
-              style={{ backgroundColor: '#ffffff' }}
-              className="border rounded-lg p-4 space-y-4"
+              className="bg-white border rounded-lg p-4 space-y-4"
             >
               {post.media_url && (
                 <img
                   src={post.media_url}
-                  alt="Uploaded"
+                  alt=""
                   className="w-full max-h-60 object-cover rounded"
                 />
               )}
