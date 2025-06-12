@@ -1,12 +1,11 @@
 // app/layout.tsx
 
-import './globals.css';              // ← correct relative import
-
+import './globals.css';
 import { Providers } from './providers';
 
 export const metadata = {
   title: 'Suck Thumb',
-  description: 'Share your moments.',
+  description: 'Share your moments and feel better.',
 };
 
 export default function RootLayout({
@@ -17,7 +16,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head />
-      <body className="bg-background text-foreground">
+      <body className="bg-blue-50 text-gray-900">
         <Providers>{children}</Providers>
       </body>
     </html>
