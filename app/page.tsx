@@ -105,7 +105,7 @@ export default function HomePage() {
           value={newPost}
           onChange={e => setNewPost(e.target.value)}
           placeholder="What happened today?"
-          className="w-full"
+          className="w-full bg-white !bg-white"
         />
 
         {/* Upload button only visible below md (mobile/tablet) */}
