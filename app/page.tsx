@@ -1,4 +1,4 @@
-// app/page.tsx
+// File: app/page.tsx
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -20,6 +20,7 @@ export default function HomePage() {
   const [newPost, setNewPost] = useState('');
   const [file, setFile] = useState<File | null>(null);
 
+  // Fetch posts on mount
   useEffect(() => {
     (async () => {
       const { data, error } = await supabase
@@ -31,18 +32,24 @@ export default function HomePage() {
     })();
   }, []);
 
+  // File picker
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) =>
     setFile(e.target.files?.[0] ?? null);
 
+  // Upload helper
   const uploadImage = async (f: File) => {
     const path = `${Date.now()}_${f.name}`;
     const { data, error } = await supabase.storage
       .from('stories')
       .upload(path, f);
-    if (error) return null;
+    if (error) {
+      console.error(error);
+      return null;
+    }
     return supabase.storage.from('stories').getPublicUrl(data.path).publicUrl;
   };
 
+  // Submit a new moment
   const handleSubmit = async () => {
     if (!newPost.trim() && !file) return;
     let mediaUrl: string | null = null;
@@ -55,6 +62,7 @@ export default function HomePage() {
     else {
       setNewPost('');
       setFile(null);
+      // reload
       const { data } = await supabase
         .from('moments')
         .select('*')
@@ -63,28 +71,30 @@ export default function HomePage() {
     }
   };
 
+  // Like
   const handleLike = async (id: string) => {
     const { error } = await supabase.rpc('increment_likes', { row_id: id });
     if (error) console.error(error);
     else
-      setPosts((p) =>
-        p.map((x) => (x.id === id ? { ...x, likes: x.likes + 1 } : x))
+      setPosts((prev) =>
+        prev.map((p) => (p.id === id ? { ...p, likes: p.likes + 1 } : p))
       );
   };
 
+  // Delete
   const handleDelete = async (id: string) => {
     if (!confirm('Delete this moment?')) return;
     const { error } = await supabase.from('moments').delete().eq('id', id);
     if (error) console.error(error);
-    else setPosts((p) => p.filter((x) => x.id !== id));
+    else setPosts((prev) => prev.filter((p) => p.id !== id));
   };
 
   return (
     <main className="max-w-2xl mx-auto p-6 space-y-8 font-sans">
-      {/* hero */}
+      {/* Hero */}
       <section
         className="p-8 rounded-xl shadow border border-[#1414A0] text-center space-y-4"
-        style={{ backgroundColor: '#fff' }}
+        style={{ backgroundColor: '#ffffff' }}
       >
         <h1 className="text-4xl font-bold text-[#1414A0]">
           Suck Thumb? Share It!
@@ -97,17 +107,18 @@ export default function HomePage() {
         </p>
       </section>
 
-      {/* new moment */}
+      {/* New Moment Form */}
       <section className="space-y-3">
+        {/* Plain textarea with white bg */}
         <textarea
           value={newPost}
           onChange={(e) => setNewPost(e.target.value)}
           placeholder="What happened today?"
-          className="w-full p-2 border rounded bg-white"
           rows={4}
+          className="w-full p-2 border rounded bg-white"
         />
 
-        {/* mobile-only upload */}
+        {/* Mobile-only Upload */}
         <label className="block md:hidden">
           <input
             type="file"
@@ -125,7 +136,7 @@ export default function HomePage() {
         </Button>
       </section>
 
-      {/* moments list */}
+      {/* Moments List */}
       <section className="space-y-6">
         {posts.length === 0 && (
           <p className="text-center text-gray-500">
