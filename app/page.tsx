@@ -1,4 +1,4 @@
-// app/page.tsx
+// File: app/page.tsx
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -21,7 +21,7 @@ export default function HomePage() {
   const [newPost, setNewPost] = useState('');
   const [file, setFile] = useState<File | null>(null);
 
-  // Load moments on mount
+  // Load all moments on mount
   useEffect(() => {
     const load = async () => {
       const { data, error } = await supabase
@@ -34,12 +34,11 @@ export default function HomePage() {
     load();
   }, []);
 
-  // Handle file selection
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Pick a file
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) =>
     setFile(e.target.files?.[0] ?? null);
-  };
 
-  // Upload image
+  // Upload and get public URL
   const uploadImage = async (file: File) => {
     const path = `${Date.now()}_${file.name}`;
     const { data, error } = await supabase.storage
@@ -52,11 +51,12 @@ export default function HomePage() {
     return supabase.storage.from('stories').getPublicUrl(data.path).publicUrl;
   };
 
-  // Submit new moment
+  // Submit a new moment
   const handleSubmit = async () => {
     if (!newPost.trim() && !file) return;
     let mediaUrl: string | null = null;
     if (file) mediaUrl = await uploadImage(file);
+
     const { error } = await supabase
       .from('moments')
       .insert([{ text: newPost.trim(), media_url: mediaUrl, likes: 0 }]);
@@ -64,6 +64,7 @@ export default function HomePage() {
     else {
       setNewPost('');
       setFile(null);
+      // refresh list
       const { data } = await supabase
         .from('moments')
         .select('*')
@@ -76,9 +77,10 @@ export default function HomePage() {
   const handleLike = async (id: string) => {
     const { error } = await supabase.rpc('increment_likes', { row_id: id });
     if (error) console.error('Error liking post:', error);
-    else setPosts(prev =>
-      prev.map(p => (p.id === id ? { ...p, likes: p.likes + 1 } : p))
-    );
+    else
+      setPosts((prev) =>
+        prev.map((p) => (p.id === id ? { ...p, likes: p.likes + 1 } : p))
+      );
   };
 
   // Delete a moment
@@ -86,13 +88,16 @@ export default function HomePage() {
     if (!confirm('Delete this moment?')) return;
     const { error } = await supabase.from('moments').delete().eq('id', id);
     if (error) console.error('Error deleting post:', error);
-    else setPosts(prev => prev.filter(p => p.id !== id));
+    else setPosts((prev) => prev.filter((p) => p.id !== id));
   };
 
   return (
     <main className="max-w-2xl mx-auto p-6 space-y-8 font-sans">
       {/* Hero */}
-      <section className="bg-white p-8 rounded-xl shadow border border-[#1414A0] text-center space-y-4">
+      <section
+        className="p-8 rounded-xl shadow border border-[#1414A0] text-center space-y-4"
+        style={{ backgroundColor: '#ffffff' }}
+      >
         <h1 className="text-4xl font-bold text-[#1414A0]">Suck Thumb? Share It!</h1>
         <p className="text-lg text-[#1414A0]">Got rejected, missed a chance, kena scolded?</p>
         <p className="text-base text-[#1414A0]">Don’t just suck thumb. Vent it here — rant, laugh, or heal.</p>
@@ -102,12 +107,13 @@ export default function HomePage() {
       <section className="space-y-3">
         <Textarea
           value={newPost}
-          onChange={e => setNewPost(e.target.value)}
+          onChange={(e) => setNewPost(e.target.value)}
           placeholder="What happened today?"
-          className="w-full moment-input"
+          className="w-full"
+          style={{ backgroundColor: '#ffffff' }}
         />
 
-        {/* Upload Image button only on mobile */}
+        {/* Mobile-only upload */}
         <label className="block md:hidden">
           <input
             type="file"
@@ -128,12 +134,15 @@ export default function HomePage() {
       {/* Moments List */}
       <section className="space-y-6">
         {posts.length === 0 ? (
-          <p className="text-center text-gray-500">No moments yet. Be the first to share!</p>
+          <p className="text-center text-gray-500">
+            No moments yet. Be the first to share!
+          </p>
         ) : (
-          posts.map(post => (
+          posts.map((post) => (
             <div
               key={post.id}
-              className="moment-card border rounded-lg p-4 space-y-4"
+              className="border rounded-lg p-4 space-y-4"
+              style={{ backgroundColor: '#ffffff' }}
             >
               {post.media_url && (
                 <img
