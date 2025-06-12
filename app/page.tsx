@@ -39,7 +39,7 @@ export default function HomePage() {
     setFile(e.target.files?.[0] ?? null);
   };
 
-  // Upload to Supabase Storage
+  // Upload image
   const uploadImage = async (file: File) => {
     const path = `${Date.now()}_${file.name}`;
     const { data, error } = await supabase.storage
@@ -64,7 +64,6 @@ export default function HomePage() {
     else {
       setNewPost('');
       setFile(null);
-      // reload
       const { data } = await supabase
         .from('moments')
         .select('*')
@@ -77,9 +76,10 @@ export default function HomePage() {
   const handleLike = async (id: string) => {
     const { error } = await supabase.rpc('increment_likes', { row_id: id });
     if (error) console.error('Error liking post:', error);
-    else setPosts(prev =>
-      prev.map(p => (p.id === id ? { ...p, likes: p.likes + 1 } : p))
-    );
+    else
+      setPosts(prev =>
+        prev.map(p => (p.id === id ? { ...p, likes: p.likes + 1 } : p))
+      );
   };
 
   // Delete a moment
@@ -95,8 +95,12 @@ export default function HomePage() {
       {/* Hero */}
       <section className="bg-white p-8 rounded-xl shadow border border-[#1414A0] text-center space-y-4">
         <h1 className="text-4xl font-bold text-[#1414A0]">Suck Thumb? Share It!</h1>
-        <p className="text-lg text-[#1414A0]">Got rejected, missed a chance, kena scolded?</p>
-        <p className="text-base text-[#1414A0]">Don’t just suck thumb. Vent it here — rant, laugh, or heal.</p>
+        <p className="text-lg text-[#1414A0]">
+          Got rejected, missed a chance, kena scolded?
+        </p>
+        <p className="text-base text-[#1414A0]">
+          Don’t just suck thumb. Vent it here — rant, laugh, or heal.
+        </p>
       </section>
 
       {/* New Moment Form */}
@@ -105,10 +109,10 @@ export default function HomePage() {
           value={newPost}
           onChange={e => setNewPost(e.target.value)}
           placeholder="What happened today?"
-          className="w-full bg-white !bg-white"
+          className="w-full bg-white dark:bg-white !bg-white"
         />
 
-        {/* Upload button only visible below md (mobile/tablet) */}
+        {/* Upload button only on mobile */}
         <label className="block md:hidden">
           <input
             type="file"
@@ -129,12 +133,14 @@ export default function HomePage() {
       {/* Moments List */}
       <section className="space-y-6">
         {posts.length === 0 ? (
-          <p className="text-center text-gray-500">No moments yet. Be the first to share!</p>
+          <p className="text-center text-gray-500">
+            No moments yet. Be the first to share!
+          </p>
         ) : (
           posts.map(post => (
             <div
               key={post.id}
-              className="!bg-white border rounded-lg p-4 space-y-4"
+              className="bg-white dark:bg-white border rounded-lg p-4 space-y-4"
             >
               {post.media_url && (
                 <img
@@ -145,7 +151,9 @@ export default function HomePage() {
               )}
               <p className="text-gray-800">{post.text}</p>
               <div className="flex justify-between items-center text-sm text-gray-500">
-                <span>{moment(post.created_at).format('DD/MM/YYYY, HH:mm:ss')}</span>
+                <span>
+                  {moment(post.created_at).format('DD/MM/YYYY, HH:mm:ss')}
+                </span>
                 <div className="flex gap-4">
                   <Button variant="ghost" onClick={() => handleLike(post.id)}>
                     ❤️ {post.likes}
