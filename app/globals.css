@@ -134,3 +134,12 @@ textarea,
 .moment-card {
   background-color: #ffffff !important;
 }
+/* app/globals.css */
+
+/* … your existing imports … */
+
+/* super-high-specificity rule so nothing else can turn these blue: */
+textarea,
+.moment-card {
+  background-color: #ffffff !important;
+}
