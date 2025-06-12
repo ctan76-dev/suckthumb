@@ -22,17 +22,16 @@ export default function HomePage() {
   const [file, setFile] = useState<File | null>(null);
 
   // Fetch latest moments
-  const fetchPosts = async () => {
-    const { data, error } = await supabase
-      .from('moments')
-      .select('*')
-      .order('created_at', { ascending: false });
-    if (error) console.error('Error loading posts:', error);
-    else setPosts(data as Post[]);
-  };
-
   useEffect(() => {
-    fetchPosts();
+    const load = async () => {
+      const { data, error } = await supabase
+        .from('moments')
+        .select('*')
+        .order('created_at', { ascending: false });
+      if (error) console.error('Error loading posts:', error);
+      else setPosts(data as Post[]);
+    };
+    load();
   }, []);
 
   // Handle image selection
@@ -40,7 +39,7 @@ export default function HomePage() {
     setFile(e.target.files?.[0] ?? null);
   };
 
-  // Upload image to Supabase Storage and return public URL
+  // Upload to Supabase Storage
   const uploadImage = async (file: File) => {
     const filePath = `${Date.now()}_${file.name}`;
     const { data, error } = await supabase.storage
@@ -56,11 +55,11 @@ export default function HomePage() {
     return publicUrl;
   };
 
-  // Add a new moment (with optional image)
+  // Add a new moment
   const handleSubmit = async () => {
-    if (!newPost.trim() && !file) return; // require text or image
+    if (!newPost.trim() && !file) return;
 
-    let mediaUrl = null;
+    let mediaUrl: string | null = null;
     if (file) {
       mediaUrl = await uploadImage(file);
     }
@@ -68,20 +67,28 @@ export default function HomePage() {
     const { error } = await supabase
       .from('moments')
       .insert([{ text: newPost.trim(), media_url: mediaUrl, likes: 0 }]);
-    if (error) {
-      console.error('Error adding post:', error);
-    } else {
+    if (error) console.error('Error adding post:', error);
+    else {
       setNewPost('');
       setFile(null);
-      fetchPosts();
+      // refresh list
+      const { data } = await supabase
+        .from('moments')
+        .select('*')
+        .order('created_at', { ascending: false });
+      setPosts(data as Post[]);
     }
   };
 
-  // Increment likes
+  // Like a moment
   const handleLike = async (id: string) => {
     const { error } = await supabase.rpc('increment_likes', { row_id: id });
     if (error) console.error('Error liking post:', error);
-    else fetchPosts();
+    else {
+      setPosts((prev) =>
+        prev.map((p) => (p.id === id ? { ...p, likes: p.likes + 1 } : p))
+      );
+    }
   };
 
   // Delete a moment
@@ -89,12 +96,12 @@ export default function HomePage() {
     if (!confirm('Delete this moment?')) return;
     const { error } = await supabase.from('moments').delete().eq('id', id);
     if (error) console.error('Error deleting post:', error);
-    else fetchPosts();
+    else setPosts((prev) => prev.filter((p) => p.id !== id));
   };
 
   return (
     <main className="max-w-2xl mx-auto p-6 space-y-8 font-sans">
-      {/* Hero Section */}
+      {/* Hero */}
       <section className="bg-white p-8 rounded-xl shadow border border-[#1414A0] text-center space-y-4">
         <h1 className="text-4xl font-bold text-[#1414A0]">Suck Thumb? Share It!</h1>
         <p className="text-lg text-[#1414A0]">Got rejected, missed a chance, kena scolded?</p>
@@ -126,7 +133,11 @@ export default function HomePage() {
           <p className="text-center text-gray-500">No moments yet. Be the first to share!</p>
         ) : (
           posts.map((post) => (
-            <div key={post.id} className="bg-white border rounded-lg p-4 space-y-4">
+            <div
+              key={post.id}
+              style={{ backgroundColor: '#ffffff' }}
+              className="border rounded-lg p-4 space-y-4"
+            >
               {post.media_url && (
                 <img
                   src={post.media_url}
