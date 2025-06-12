@@ -34,11 +34,12 @@ export default function HomePage() {
     load();
   }, []);
 
-  // Pick a file
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) =>
+  // Handle file selection
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFile(e.target.files?.[0] ?? null);
+  };
 
-  // Upload and get public URL
+  // Upload and return public URL
   const uploadImage = async (file: File) => {
     const path = `${Date.now()}_${file.name}`;
     const { data, error } = await supabase.storage
@@ -60,11 +61,12 @@ export default function HomePage() {
     const { error } = await supabase
       .from('moments')
       .insert([{ text: newPost.trim(), media_url: mediaUrl, likes: 0 }]);
-    if (error) console.error('Error adding post:', error);
-    else {
+    if (error) {
+      console.error('Error adding post:', error);
+    } else {
       setNewPost('');
       setFile(null);
-      // refresh list
+      // reload list
       const { data } = await supabase
         .from('moments')
         .select('*')
@@ -73,7 +75,7 @@ export default function HomePage() {
     }
   };
 
-  // Like a moment
+  // Increment likes
   const handleLike = async (id: string) => {
     const { error } = await supabase.rpc('increment_likes', { row_id: id });
     if (error) console.error('Error liking post:', error);
@@ -98,9 +100,15 @@ export default function HomePage() {
         className="p-8 rounded-xl shadow border border-[#1414A0] text-center space-y-4"
         style={{ backgroundColor: '#ffffff' }}
       >
-        <h1 className="text-4xl font-bold text-[#1414A0]">Suck Thumb? Share It!</h1>
-        <p className="text-lg text-[#1414A0]">Got rejected, missed a chance, kena scolded?</p>
-        <p className="text-base text-[#1414A0]">Don’t just suck thumb. Vent it here — rant, laugh, or heal.</p>
+        <h1 className="text-4xl font-bold text-[#1414A0]">
+          Suck Thumb? Share It!
+        </h1>
+        <p className="text-lg text-[#1414A0]">
+          Got rejected, missed a chance, kena scolded?
+        </p>
+        <p className="text-base text-[#1414A0]">
+          Don’t just suck thumb. Vent it here — rant, laugh, or heal.
+        </p>
       </section>
 
       {/* New Moment Form */}
@@ -109,7 +117,7 @@ export default function HomePage() {
           value={newPost}
           onChange={(e) => setNewPost(e.target.value)}
           placeholder="What happened today?"
-          className="w-full"
+          className="w-full moment-input"
           style={{ backgroundColor: '#ffffff' }}
         />
 
@@ -141,7 +149,7 @@ export default function HomePage() {
           posts.map((post) => (
             <div
               key={post.id}
-              className="border rounded-lg p-4 space-y-4"
+              className="moment-card border rounded-lg p-4 space-y-4"
               style={{ backgroundColor: '#ffffff' }}
             >
               {post.media_url && (
@@ -153,7 +161,9 @@ export default function HomePage() {
               )}
               <p className="text-gray-800">{post.text}</p>
               <div className="flex justify-between items-center text-sm text-gray-500">
-                <span>{moment(post.created_at).format('DD/MM/YYYY, HH:mm:ss')}</span>
+                <span>
+                  {moment(post.created_at).format('DD/MM/YYYY, HH:mm:ss')}
+                </span>
                 <div className="flex gap-4">
                   <Button variant="ghost" onClick={() => handleLike(post.id)}>
                     ❤️ {post.likes}
