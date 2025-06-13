@@ -20,7 +20,6 @@ export default function HomePage() {
   const [newPost, setNewPost] = useState('');
   const [file, setFile] = useState<File | null>(null);
 
-  // Fetch posts on mount
   useEffect(() => {
     (async () => {
       const { data, error } = await supabase
@@ -32,24 +31,18 @@ export default function HomePage() {
     })();
   }, []);
 
-  // File picker
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) =>
     setFile(e.target.files?.[0] ?? null);
 
-  // Upload helper
   const uploadImage = async (f: File) => {
     const path = `${Date.now()}_${f.name}`;
     const { data, error } = await supabase.storage
       .from('stories')
       .upload(path, f);
-    if (error) {
-      console.error(error);
-      return null;
-    }
+    if (error) return null;
     return supabase.storage.from('stories').getPublicUrl(data.path).publicUrl;
   };
 
-  // Submit a new moment
   const handleSubmit = async () => {
     if (!newPost.trim() && !file) return;
     let mediaUrl: string | null = null;
@@ -62,7 +55,6 @@ export default function HomePage() {
     else {
       setNewPost('');
       setFile(null);
-      // reload
       const { data } = await supabase
         .from('moments')
         .select('*')
@@ -71,7 +63,6 @@ export default function HomePage() {
     }
   };
 
-  // Like
   const handleLike = async (id: string) => {
     const { error } = await supabase.rpc('increment_likes', { row_id: id });
     if (error) console.error(error);
@@ -81,7 +72,6 @@ export default function HomePage() {
       );
   };
 
-  // Delete
   const handleDelete = async (id: string) => {
     if (!confirm('Delete this moment?')) return;
     const { error } = await supabase.from('moments').delete().eq('id', id);
@@ -109,7 +99,6 @@ export default function HomePage() {
 
       {/* New Moment Form */}
       <section className="space-y-3">
-        {/* Plain textarea with white bg */}
         <textarea
           value={newPost}
           onChange={(e) => setNewPost(e.target.value)}
@@ -118,7 +107,7 @@ export default function HomePage() {
           className="w-full p-2 border rounded bg-white"
         />
 
-        {/* Mobile-only Upload */}
+        {/* Mobile-only upload */}
         <label className="block md:hidden">
           <input
             type="file"
