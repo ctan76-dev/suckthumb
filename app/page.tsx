@@ -23,7 +23,7 @@ export default function HomePage() {
   const [newPost, setNewPost] = useState('');
   const [file, setFile] = useState<File | null>(null);
 
-  // Load all posts on mount
+  // 1️⃣ Load all posts on mount
   useEffect(() => {
     (async () => {
       const { data, error } = await supabase
@@ -31,66 +31,71 @@ export default function HomePage() {
         .select('*')
         .order('created_at', { ascending: false });
       if (error) {
-        console.error(error);
+        console.error('Error loading posts:', error);
       } else {
         setPosts(data as Post[]);
       }
     })();
   }, [supabase]);
 
-  // Handle file selection
+  // 2️⃣ Handle file selection
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFile(e.target.files?.[0] ?? null);
   };
 
-  // Upload and return public URL
+  // 3️⃣ Upload image and return its public URL
   const uploadImage = async (f: File) => {
     const path = `${Date.now()}_${f.name}`;
-    const { data, error } = await supabase.storage
+    const { data: uploadData, error: uploadError } = await supabase.storage
       .from('stories')
       .upload(path, f);
-    if (error) {
-      console.error('Upload error:', error);
+
+    if (uploadError) {
+      console.error('Upload error:', uploadError);
       return null;
     }
-    return supabase.storage.from('stories').getPublicUrl(data.path).publicUrl;
+
+    // getPublicUrl now returns { data: { publicUrl } }
+    const {
+      data: { publicUrl },
+    } = supabase.storage.from('stories').getPublicUrl(uploadData.path);
+
+    return publicUrl;
   };
 
-  // Submit a new moment
+  // 4️⃣ Submit a new moment
   const handleSubmit = async () => {
     if (!newPost.trim() && !file) return;
+
     let mediaUrl: string | null = null;
     if (file) {
       mediaUrl = await uploadImage(file);
     }
 
-    const { error } = await supabase
-      .from('moments')
-      .insert([{ text: newPost.trim(), media_url: mediaUrl, likes: 0 }]);
+    const { error } = await supabase.from('moments').insert([
+      { text: newPost.trim(), media_url: mediaUrl, likes: 0 },
+    ]);
     if (error) {
       console.error('Error adding post:', error);
     } else {
       setNewPost('');
       setFile(null);
+      // reload feed
       const { data } = await supabase
         .from('moments')
         .select('*')
         .order('created_at', { ascending: false });
-      if (data) {
-        setPosts(data as Post[]);
-      }
+      if (data) setPosts(data as Post[]);
     }
   };
 
-  // Like a moment
+  // 5️⃣ Like & Delete handlers
   const handleLike = async (id: string) => {
     await supabase.rpc('increment_likes', { row_id: id });
     setPosts((prev) =>
       prev.map((p) => (p.id === id ? { ...p, likes: p.likes + 1 } : p))
     );
   };
-
-  // Delete a moment
   const handleDelete = async (id: string) => {
     if (!confirm('Delete this moment?')) return;
     await supabase.from('moments').delete().eq('id', id);
@@ -99,7 +104,7 @@ export default function HomePage() {
 
   return (
     <main className="max-w-2xl mx-auto p-6 space-y-8 font-sans">
-      {/* Branding & Sign-in prompt */}
+      {/* Branding & Sign-in Prompt */}
       <section className="bg-white p-6 rounded-xl shadow text-center space-y-2">
         <h2 className="text-2xl font-bold text-[#1414A0]">
           Welcome to SuckThumb.com
@@ -119,7 +124,9 @@ export default function HomePage() {
 
       {/* Hero Section */}
       <section className="bg-white p-8 rounded-xl shadow border border-[#1414A0] text-center space-y-4">
-        <h1 className="text-3xl font-bold text-[#1414A0]">Suck Thumb? Share It!</h1>
+        <h1 className="text-3xl font-bold text-[#1414A0]">
+          Suck Thumb? Share It!
+        </h1>
         <p className="text-[#1414A0]">
           Got rejected, missed a chance, kena scolded? Vent it here — rant, laugh,
           or heal.
@@ -180,10 +187,16 @@ export default function HomePage() {
                 {moment(post.created_at).format('DD/MM/YYYY HH:mm')}
               </span>
               <div className="flex gap-2">
-                <Button variant="ghost" onClick={() => handleLike(post.id)}>
+                <Button
+                  variant="ghost"
+                  onClick={() => handleLike(post.id)}
+                >
                   ❤️ {post.likes}
                 </Button>
-                <Button variant="ghost" onClick={() => handleDelete(post.id)}>
+                <Button
+                  variant="ghost"
+                  onClick={() => handleDelete(post.id)}
+                >
                   <Trash className="h-4 w-4" />
                 </Button>
               </div>
