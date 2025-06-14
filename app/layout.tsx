@@ -1,5 +1,4 @@
 // app/layout.tsx
-
 import './globals.css';
 import { Providers } from './providers';
 
@@ -16,7 +15,8 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head />
-      <body className="bg-blue-100 text-gray-900">
+      {/* ⬇️ Changed bg-white instead of bg-blue-50 */}
+      <body className="bg-white text-gray-900">
         <Providers>{children}</Providers>
       </body>
     </html>
