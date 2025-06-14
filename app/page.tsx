@@ -1,4 +1,4 @@
-// File: app/page.tsx
+// app/page.tsx
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -20,55 +20,66 @@ export default function HomePage() {
   const [newPost, setNewPost] = useState('');
   const [file, setFile] = useState<File | null>(null);
 
-  // Load posts on mount
+  // 1) Load existing posts
   useEffect(() => {
     (async () => {
       const { data, error } = await supabase
         .from('moments')
         .select('*')
         .order('created_at', { ascending: false });
-      if (!error && data) setPosts(data as Post[]);
+      if (error) console.error(error);
+      else setPosts(data as Post[]);
     })();
   }, []);
 
+  // 2) Handle file selection
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) =>
     setFile(e.target.files?.[0] ?? null);
 
+  // 3) Upload file and return its public URL
   const uploadImage = async (f: File) => {
-    const path = `${Date.now()}_${f.name}`;
+    const filePath = `${Date.now()}_${f.name}`;
     const { data, error } = await supabase.storage
       .from('stories')
-      .upload(path, f);
-    if (error) return null;
-    return supabase.storage.from('stories').getPublicUrl(data.path).publicUrl;
+      .upload(filePath, f);
+    if (error) {
+      console.error('Upload error:', error);
+      return null;
+    }
+    return supabase.storage
+      .from('stories')
+      .getPublicUrl(data.path).publicUrl;
   };
 
+  // 4) Submit new moment
   const handleSubmit = async () => {
     if (!newPost.trim() && !file) return;
     let mediaUrl: string | null = null;
     if (file) mediaUrl = await uploadImage(file);
 
-    await supabase.from('moments').insert([{
-      text: newPost.trim(),
-      media_url: mediaUrl,
-      likes: 0
-    }]);
-
-    setNewPost('');
-    setFile(null);
-
-    const { data } = await supabase
-      .from('moments')
-      .select('*')
-      .order('created_at', { ascending: false });
-    if (data) setPosts(data as Post[]);
+    const { error } = await supabase.from('moments').insert([
+      { text: newPost.trim(), media_url: mediaUrl, likes: 0 }
+    ]);
+    if (error) console.error(error);
+    else {
+      setNewPost('');
+      setFile(null);
+      // refresh list
+      const { data } = await supabase
+        .from('moments')
+        .select('*')
+        .order('created_at', { ascending: false });
+      if (data) setPosts(data as Post[]);
+    }
   };
 
+  // 5) Like & delete handlers (unchanged)
   const handleLike = async (id: string) => {
     await supabase.rpc('increment_likes', { row_id: id });
-    setPosts(p => p.map(x => x.id === id ? { ...x, likes: x.likes + 1 } : x));
+    setPosts(p =>
+      p.map(x => (x.id === id ? { ...x, likes: x.likes + 1 } : x))
+    );
   };
-
   const handleDelete = async (id: string) => {
     if (!confirm('Delete this moment?')) return;
     await supabase.from('moments').delete().eq('id', id);
@@ -76,86 +87,57 @@ export default function HomePage() {
   };
 
   return (
-    <main className="max-w-2xl mx-auto p-6 space-y-8 font-sans">
+    <main className="max-w-2xl mx-auto p-6 space-y-8">
       {/* Hero */}
-      <section
-        className="bg-white p-8 rounded-xl shadow border border-[#1414A0] text-center space-y-4"
-      >
-        <h1 className="text-4xl font-bold text-[#1414A0]">
-          Suck Thumb? Share It!
-        </h1>
-        <p className="text-lg text-[#1414A0]">
-          Got rejected, missed a chance, kena scolded?
-        </p>
-        <p className="text-base text-[#1414A0]">
-          Don’t just suck thumb. Vent it here — rant, laugh, or heal.
-        </p>
+      <section className="bg-white p-8 rounded shadow border border-[#1414A0] text-center space-y-4">
+        <h1 className="text-3xl font-bold text-[#1414A0]">Suck Thumb? Share It!</h1>
+        <p className="text-[#1414A0]">Got rejected… rant, laugh, or heal.</p>
       </section>
 
-      {/* New Moment Form wrapped on white */}
-      <section className="bg-white p-6 rounded-lg shadow space-y-4">
+      {/* Form */}
+      <section className="bg-white p-6 rounded shadow space-y-4">
         <textarea
+          className="w-full p-2 border rounded"
+          rows={4}
+          placeholder="What happened today?"
           value={newPost}
           onChange={e => setNewPost(e.target.value)}
-          placeholder="What happened today?"
-          rows={4}
-          className="w-full p-2 border rounded bg-white"
         />
-
-        {/* Mobile only image upload */}
-        <label className="block md:hidden">
-          <input
-            type="file"
-            accept="image/*"
-            onChange={handleFileChange}
-            className="hidden"
-          />
-          <Button variant="outline" className="w-full">
-            Upload Image
-          </Button>
-        </label>
-
+        <input
+          type="file"
+          accept="image/*"
+          onChange={handleFileChange}
+        />
         <Button onClick={handleSubmit} className="w-full">
           Post Your Story
         </Button>
       </section>
 
-      {/* Moments List */}
+      {/* Posts */}
       <section className="space-y-6">
-        {posts.length === 0 ? (
-          <p className="text-center text-gray-500">
-            No moments yet. Be the first to share!
-          </p>
-        ) : (
-          posts.map(post => (
-            <div
-              key={post.id}
-              className="bg-white border rounded-lg p-4 space-y-4"
-            >
-              {post.media_url && (
-                <img
-                  src={post.media_url}
-                  alt=""
-                  className="w-full max-h-60 object-cover rounded"
-                />
-              )}
-              <p className="text-gray-800">{post.text}</p>
-              <div className="flex justify-between items-center text-sm text-gray-500">
-                <span>
-                  {moment(post.created_at).format('DD/MM/YYYY, HH:mm:ss')}
-                </span>
-                <div className="flex gap-4">
-                  <Button variant="ghost" onClick={() => handleLike(post.id)}>
-                    ❤️ {post.likes}
-                  </Button>
-                  <Button variant="ghost" onClick={() => handleDelete(post.id)}>
-                    <Trash className="h-4 w-4" />
-                  </Button>
-                </div>
+        {posts.map(post => (
+          <div key={post.id} className="bg-white p-4 rounded shadow space-y-2">
+            {post.media_url && (
+              <img
+                src={post.media_url}
+                alt=""
+                className="w-full object-cover rounded"
+              />
+            )}
+            <p>{post.text}</p>
+            <div className="flex justify-between text-sm text-gray-500">
+              <span>{moment(post.created_at).format('DD/MM/YYYY HH:mm')}</span>
+              <div className="flex gap-2">
+                <Button variant="ghost" onClick={() => handleLike(post.id)}>
+                  ❤️ {post.likes}
+                </Button>
+                <Button variant="ghost" onClick={() => handleDelete(post.id)}>
+                  <Trash />
+                </Button>
               </div>
             </div>
-          ))
-        )}
+          </div>
+        ))}
       </section>
     </main>
   );
