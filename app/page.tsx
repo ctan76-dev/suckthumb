@@ -30,14 +30,20 @@ export default function HomePage() {
         .from('moments')
         .select('*')
         .order('created_at', { ascending: false });
-      if (error) console.error(error);
-      else setPosts(data as Post[]);
+      if (error) {
+        console.error(error);
+      } else {
+        setPosts(data as Post[]);
+      }
     })();
   }, [supabase]);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) =>
+  // Handle file selection
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFile(e.target.files?.[0] ?? null);
+  };
 
+  // Upload and return public URL
   const uploadImage = async (f: File) => {
     const path = `${Date.now()}_${f.name}`;
     const { data, error } = await supabase.storage
@@ -50,38 +56,45 @@ export default function HomePage() {
     return supabase.storage.from('stories').getPublicUrl(data.path).publicUrl;
   };
 
+  // Submit a new moment
   const handleSubmit = async () => {
     if (!newPost.trim() && !file) return;
     let mediaUrl: string | null = null;
-    if (file) mediaUrl = await uploadImage(file);
+    if (file) {
+      mediaUrl = await uploadImage(file);
+    }
 
-    const { error } = await supabase.from('moments').insert([
-      { text: newPost.trim(), media_url: mediaUrl, likes: 0 },
-    ]);
-    if (error) console.error(error);
-    else {
+    const { error } = await supabase
+      .from('moments')
+      .insert([{ text: newPost.trim(), media_url: mediaUrl, likes: 0 }]);
+    if (error) {
+      console.error('Error adding post:', error);
+    } else {
       setNewPost('');
       setFile(null);
-      // refresh feed
       const { data } = await supabase
         .from('moments')
         .select('*')
         .order('created_at', { ascending: false });
-      if (data) setPosts(data as Post[]);
+      if (data) {
+        setPosts(data as Post[]);
+      }
     }
   };
 
+  // Like a moment
   const handleLike = async (id: string) => {
     await supabase.rpc('increment_likes', { row_id: id });
-    setPosts((p) =>
-      p.map((x) => (x.id === id ? { ...x, likes: x.likes + 1 } : x))
+    setPosts((prev) =>
+      prev.map((p) => (p.id === id ? { ...p, likes: p.likes + 1 } : p))
     );
   };
 
+  // Delete a moment
   const handleDelete = async (id: string) => {
     if (!confirm('Delete this moment?')) return;
     await supabase.from('moments').delete().eq('id', id);
-    setPosts((p) => p.filter((x) => x.id !== id));
+    setPosts((prev) => prev.filter((p) => p.id !== id));
   };
 
   return (
@@ -94,8 +107,8 @@ export default function HomePage() {
         {!session ? (
           <p className="text-gray-600">
             Please{' '}
-            <Link href="/signin">
-              <a className="text-blue-600 hover:underline">sign in</a>
+            <Link href="/signin" className="text-blue-600 hover:underline">
+              sign in
             </Link>{' '}
             to post your story.
           </p>
@@ -108,11 +121,12 @@ export default function HomePage() {
       <section className="bg-white p-8 rounded-xl shadow border border-[#1414A0] text-center space-y-4">
         <h1 className="text-3xl font-bold text-[#1414A0]">Suck Thumb? Share It!</h1>
         <p className="text-[#1414A0]">
-          Got rejected, missed a chance, kena scolded? Vent it here — rant, laugh, or heal.
+          Got rejected, missed a chance, kena scolded? Vent it here — rant, laugh,
+          or heal.
         </p>
       </section>
 
-      {/* Post Form — only render when signed in */}
+      {/* Post Form (only for signed-in users) */}
       {session && (
         <section className="bg-white p-6 rounded-lg shadow space-y-4">
           <textarea
@@ -162,7 +176,9 @@ export default function HomePage() {
             )}
             <p className="text-gray-800">{post.text}</p>
             <div className="flex justify-between items-center text-sm text-gray-500">
-              <span>{moment(post.created_at).format('DD/MM/YYYY HH:mm')}</span>
+              <span>
+                {moment(post.created_at).format('DD/MM/YYYY HH:mm')}
+              </span>
               <div className="flex gap-2">
                 <Button variant="ghost" onClick={() => handleLike(post.id)}>
                   ❤️ {post.likes}
