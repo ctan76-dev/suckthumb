@@ -2,10 +2,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import {
-  useSession,
-  useSupabaseClient,
-} from '@supabase/auth-helpers-react';
+import { useSession, useSupabaseClient } from '@supabase/auth-helpers-react';
 import moment from 'moment';
 import { Button } from '@/components/ui/button';
 import { Trash } from 'lucide-react';
@@ -27,7 +24,6 @@ export default function HomePage() {
   const [newPost, setNewPost] = useState('');
   const [file, setFile] = useState<File | null>(null);
 
-  // 1) Load moments
   useEffect(() => {
     (async () => {
       const { data, error } = await supabase
@@ -39,12 +35,9 @@ export default function HomePage() {
     })();
   }, [supabase]);
 
-  // file selector
-  const handleFileChange = (
-    e: React.ChangeEvent<HTMLInputElement>
-  ) => setFile(e.target.files?.[0] ?? null);
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) =>
+    setFile(e.target.files?.[0] ?? null);
 
-  // upload helper
   const uploadImage = async (f: File) => {
     const path = `${Date.now()}_${f.name}`;
     const { data: uploadData, error } = await supabase.storage
@@ -56,13 +49,10 @@ export default function HomePage() {
     }
     const {
       data: { publicUrl },
-    } = supabase.storage
-      .from('stories')
-      .getPublicUrl(uploadData.path);
+    } = supabase.storage.from('stories').getPublicUrl(uploadData.path);
     return publicUrl;
   };
 
-  // submit post
   const handleSubmit = async () => {
     if (!newPost.trim() && !file) return;
     let mediaUrl: string | null = null;
@@ -75,15 +65,14 @@ export default function HomePage() {
           text: newPost.trim(),
           media_url: mediaUrl,
           likes: 0,
-          user_id: session!.user.id,
-          user_email: session!.user.email!,
+          user_id: session?.user?.id,
+          user_email: session?.user?.email || '',
         },
       ]);
     if (error) console.error('Insert error:', error);
     else {
       setNewPost('');
       setFile(null);
-      // reload feed
       const { data } = await supabase
         .from('moments')
         .select('*')
@@ -92,15 +81,13 @@ export default function HomePage() {
     }
   };
 
-  // like & delete
   const handleLike = async (id: string) => {
     await supabase.rpc('increment_likes', { row_id: id });
     setPosts((p) =>
-      p.map((m) =>
-        m.id === id ? { ...m, likes: m.likes + 1 } : m
-      )
+      p.map((m) => (m.id === id ? { ...m, likes: m.likes + 1 } : m))
     );
   };
+
   const handleDelete = async (id: string) => {
     if (!confirm('Delete this moment?')) return;
     await supabase.from('moments').delete().eq('id', id);
@@ -119,7 +106,7 @@ export default function HomePage() {
         </p>
       </section>
 
-      {/* Post Form (signed-in only) */}
+      {/* Form (signed-in only) */}
       {session && (
         <section className="bg-white p-6 rounded-lg shadow space-y-4">
           <textarea
@@ -172,14 +159,12 @@ export default function HomePage() {
             )}
             <p className="text-gray-800">{post.text}</p>
             <div className="flex justify-between items-center text-sm text-gray-500">
-              <span>
-                {moment(post.created_at).format('DD/MM/YYYY HH:mm')}
-              </span>
+              <span>{moment(post.created_at).format('DD/MM/YYYY HH:mm')}</span>
               <div className="flex gap-2">
                 <Button variant="ghost" onClick={() => handleLike(post.id)}>
                   ❤️ {post.likes}
                 </Button>
-                {session!.user.id === post.user_id && (
+                {session?.user?.id === post.user_id && (
                   <Button
                     variant="ghost"
                     onClick={() => handleDelete(post.id)}
