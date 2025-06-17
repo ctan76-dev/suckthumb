@@ -5,7 +5,6 @@ import { FormEvent, useState, useEffect } from 'react';
 import { useSupabaseClient, useSession } from '@supabase/auth-helpers-react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { FcGoogle } from 'react-icons/fc';
 
 export default function SignInPage() {
   const supabase = useSupabaseClient();
@@ -16,32 +15,25 @@ export default function SignInPage() {
   const [password, setPassword] = useState('');
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  // Redirect to home as soon as we're logged in
+  // Redirect home once logged in
   useEffect(() => {
-    if (session) {
-      router.push('/');
-    }
+    if (session) router.push('/');
   }, [session, router]);
 
   // Email/password sign-in
   const handleEmailSignIn = async (e: FormEvent) => {
     e.preventDefault();
     setErrorMsg(null);
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) setErrorMsg(error.message);
   };
 
   // Google OAuth sign-in
   const handleGoogleSignIn = async () => {
+    setErrorMsg(null);
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: {
-        // replace with your actual redirect URL if needed:
-        redirectTo: window.location.origin + '/',
-      },
+      options: { redirectTo: window.location.origin + '/' },
     });
     if (error) setErrorMsg(error.message);
   };
@@ -52,19 +44,18 @@ export default function SignInPage() {
 
       {errorMsg && <p className="text-red-500">{errorMsg}</p>}
 
-      {/* 1) Google button */}
+      {/* Google button */}
       <Button
         variant="outline"
-        className="w-full flex items-center justify-center gap-2"
+        className="w-full"
         onClick={handleGoogleSignIn}
       >
-        <FcGoogle size={20} />
         Continue with Google
       </Button>
 
       <div className="text-center text-sm text-gray-500">or</div>
 
-      {/* 2) Email/Password form */}
+      {/* Email/Password form */}
       <form onSubmit={handleEmailSignIn} className="space-y-4">
         <div>
           <label className="block mb-1">Email</label>
