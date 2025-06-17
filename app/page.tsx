@@ -11,6 +11,14 @@ import moment from 'moment';
 import { Button } from '@/components/ui/button';
 import { Trash } from 'lucide-react';
 
+// Mask email for privacy, e.g. "j…@domain.com"
+function maskEmail(email: string) {
+  const [local, domain] = email.split('@');
+  if (!domain) return email;
+  const first = local.charAt(0);
+  return `${first}…@${domain}`;
+}
+
 type Post = {
   id: string;
   user_id: string;
@@ -28,7 +36,7 @@ export default function HomePage() {
   const [newPost, setNewPost] = useState('');
   const [file, setFile] = useState<File | null>(null);
 
-  // 1) Load feed
+  // Load feed on mount
   useEffect(() => {
     (async () => {
       const { data, error } = await supabase
@@ -40,16 +48,16 @@ export default function HomePage() {
     })();
   }, [supabase]);
 
-  // 2) Sign out
+  // Sign out
   const handleSignOut = async () => {
     await supabase.auth.signOut();
   };
 
-  // 3) File select
+  // File selection
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) =>
     setFile(e.target.files?.[0] ?? null);
 
-  // 4) Upload image helper
+  // Upload helper
   const uploadImage = async (f: File) => {
     const path = `${Date.now()}_${f.name}`;
     const { data: uploadData, error } = await supabase.storage
@@ -65,7 +73,7 @@ export default function HomePage() {
     return publicUrl;
   };
 
-  // 5) Submit moment
+  // Submit new moment
   const handleSubmit = async () => {
     if (!newPost.trim() && !file) return;
     let mediaUrl: string | null = null;
@@ -80,7 +88,7 @@ export default function HomePage() {
         user_email: session?.user?.email ?? '',
       },
     ]);
-    if (error) console.error(error);
+    if (error) console.error('Insert error:', error);
     else {
       setNewPost('');
       setFile(null);
@@ -92,11 +100,13 @@ export default function HomePage() {
     }
   };
 
-  // 6) Like & delete
+  // Like & delete handlers
   const handleLike = async (id: string) => {
     await supabase.rpc('increment_likes', { row_id: id });
     setPosts((prev) =>
-      prev.map((p) => (p.id === id ? { ...p, likes: p.likes + 1 } : p))
+      prev.map((p) =>
+        p.id === id ? { ...p, likes: p.likes + 1 } : p
+      )
     );
   };
   const handleDelete = async (id: string) => {
@@ -110,11 +120,7 @@ export default function HomePage() {
       {/* Logo & Site Title + Auth */}
       <section className="bg-white p-6 rounded-xl shadow text-center">
         <div className="flex items-center justify-center space-x-2 mb-4">
-          <img
-            src="/logo.png"
-            alt="SuckThumb Logo"
-            className="h-16 w-auto"
-          />
+          <img src="/logo.png" alt="SuckThumb Logo" className="h-16 w-auto" />
           <span className="text-2xl font-bold text-[#1414A0]">
             SuckThumb.com
           </span>
@@ -122,10 +128,7 @@ export default function HomePage() {
         {!session ? (
           <p className="text-gray-600">
             Please{' '}
-            <Link
-              href="/signin"
-              className="text-blue-600 hover:underline"
-            >
+            <Link href="/signin" className="text-blue-600 hover:underline">
               sign in
             </Link>{' '}
             to post your story.
@@ -133,13 +136,9 @@ export default function HomePage() {
         ) : (
           <div className="flex flex-col sm:flex-row justify-center items-center gap-4 text-gray-600">
             <span>
-              Signed in as <strong>{session.user.email}</strong>
+              Signed in as <strong>{maskEmail(session.user.email!)}</strong>
             </span>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleSignOut}
-            >
+            <Button variant="outline" size="sm" onClick={handleSignOut}>
               Sign Out
             </Button>
           </div>
@@ -149,11 +148,12 @@ export default function HomePage() {
       {/* Hero Section */}
       <section className="bg-white p-8 rounded-xl shadow border border-[#1414A0] text-center">
         <p className="text-[#1414A0]">
-          Got rejected, missed a chance, kena scolded? Vent it here — rant, laugh, or heal. SHARE IT!
+          Got rejected, missed a chance, kena scolded? Vent it here — rant, laugh,
+          or heal. SHARE IT!
         </p>
       </section>
 
-      {/* Post Form */}
+      {/* Post Form (signed-in only) */}
       {session && (
         <section className="bg-white p-6 rounded-lg shadow space-y-4">
           <textarea
@@ -175,10 +175,7 @@ export default function HomePage() {
                 Upload Image
               </Button>
             </label>
-            <Button
-              onClick={handleSubmit}
-              className="w-full sm:w-auto"
-            >
+            <Button onClick={handleSubmit} className="w-full sm:w-auto">
               Post Your Story
             </Button>
           </div>
@@ -198,7 +195,7 @@ export default function HomePage() {
               className="bg-white p-4 rounded-lg shadow space-y-2"
             >
               <p className="text-xs text-gray-500">
-                Posted by {post.user_email}
+                Posted by {maskEmail(post.user_email)}
               </p>
               {post.media_url && (
                 <img
@@ -213,10 +210,7 @@ export default function HomePage() {
                   {moment(post.created_at).format('DD/MM/YYYY HH:mm')}
                 </span>
                 <div className="flex gap-2">
-                  <Button
-                    variant="ghost"
-                    onClick={() => handleLike(post.id)}
-                  >
+                  <Button variant="ghost" onClick={() => handleLike(post.id)}>
                     ❤️ {post.likes}
                   </Button>
                   {session?.user?.id === post.user_id && (
