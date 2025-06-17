@@ -28,7 +28,7 @@ export default function HomePage() {
   const [newPost, setNewPost] = useState('');
   const [file, setFile] = useState<File | null>(null);
 
-  // Load feed
+  // 1) Load feed
   useEffect(() => {
     (async () => {
       const { data, error } = await supabase
@@ -40,16 +40,16 @@ export default function HomePage() {
     })();
   }, [supabase]);
 
-  // Sign out
+  // 2) Sign out
   const handleSignOut = async () => {
     await supabase.auth.signOut();
   };
 
-  // File selection
+  // 3) File select
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) =>
     setFile(e.target.files?.[0] ?? null);
 
-  // Upload image helper
+  // 4) Upload image helper
   const uploadImage = async (f: File) => {
     const path = `${Date.now()}_${f.name}`;
     const { data: uploadData, error } = await supabase.storage
@@ -65,7 +65,7 @@ export default function HomePage() {
     return publicUrl;
   };
 
-  // Submit a new moment
+  // 5) Submit moment
   const handleSubmit = async () => {
     if (!newPost.trim() && !file) return;
     let mediaUrl: string | null = null;
@@ -80,7 +80,7 @@ export default function HomePage() {
         user_email: session?.user?.email ?? '',
       },
     ]);
-    if (error) console.error('Insert error:', error);
+    if (error) console.error(error);
     else {
       setNewPost('');
       setFile(null);
@@ -92,16 +92,13 @@ export default function HomePage() {
     }
   };
 
-  // Like & delete handlers
+  // 6) Like & delete
   const handleLike = async (id: string) => {
     await supabase.rpc('increment_likes', { row_id: id });
     setPosts((prev) =>
-      prev.map((p) =>
-        p.id === id ? { ...p, likes: p.likes + 1 } : p
-      )
+      prev.map((p) => (p.id === id ? { ...p, likes: p.likes + 1 } : p))
     );
   };
-
   const handleDelete = async (id: string) => {
     if (!confirm('Delete this moment?')) return;
     await supabase.from('moments').delete().eq('id', id);
@@ -152,8 +149,7 @@ export default function HomePage() {
       {/* Hero Section */}
       <section className="bg-white p-8 rounded-xl shadow border border-[#1414A0] text-center">
         <p className="text-[#1414A0]">
-          Got rejected, missed a chance, kena scolded? Vent it here — rant,
-          laugh, or heal. SHARE IT!
+          Got rejected, missed a chance, kena scolded? Vent it here — rant, laugh, or heal. SHARE IT!
         </p>
       </section>
 
@@ -207,16 +203,14 @@ export default function HomePage() {
               {post.media_url && (
                 <img
                   src={post.media_url}
-                  alt=""
+                  alt="Uploaded"
                   className="w-full object-cover rounded"
                 />
               )}
               <p className="text-gray-800">{post.text}</p>
               <div className="flex justify-between items-center text-sm text-gray-500">
                 <span>
-                  {moment(post.created_at).format(
-                    'DD/MM/YYYY HH:mm'
-                  )}
+                  {moment(post.created_at).format('DD/MM/YYYY HH:mm')}
                 </span>
                 <div className="flex gap-2">
                   <Button
