@@ -125,10 +125,7 @@ export default function HomePage() {
         {!session ? (
           <p className="text-gray-600">
             Please{' '}
-            <Link
-              href="/signin"
-              className="text-blue-600 hover:underline"
-            >
+            <Link href="/signin" className="text-blue-600 hover:underline">
               sign in
             </Link>{' '}
             to post your story.
@@ -149,14 +146,10 @@ export default function HomePage() {
         )}
       </section>
 
-      {/* Hero */}
-      <section className="bg-white p-8 rounded-xl shadow border border-[#1414A0] text-center space-y-4">
-        <h1 className="text-3xl font-bold text-[#1414A0]">
-          Suck Thumb? Share It!
-        </h1>
+      {/* Hero Section (no H1) */}
+      <section className="bg-white p-8 rounded-xl shadow border border-[#1414A0] text-center">
         <p className="text-[#1414A0]">
-          Got rejected, missed a chance, kena scolded? Vent it here —
-          rant, laugh, or heal.
+          Got rejected, missed a chance, kena scolded? Vent it here — rant, laugh, or heal. SHARE IT!
         </p>
       </section>
 
@@ -192,7 +185,7 @@ export default function HomePage() {
         </section>
       )}
 
-      {/* Feed */}
+      {/* Moments Feed */}
       <section className="space-y-6">
         {posts.length === 0 ? (
           <p className="text-center text-gray-500">
