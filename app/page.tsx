@@ -28,7 +28,7 @@ export default function HomePage() {
   const [newPost, setNewPost] = useState('');
   const [file, setFile] = useState<File | null>(null);
 
-  // Load all moments
+  // Load feed
   useEffect(() => {
     (async () => {
       const { data, error } = await supabase
@@ -40,12 +40,17 @@ export default function HomePage() {
     })();
   }, [supabase]);
 
-  // File selector
-  const handleFileChange = (
-    e: React.ChangeEvent<HTMLInputElement>
-  ) => setFile(e.target.files?.[0] ?? null);
+  // Sign out handler
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    // feed will automatically clear because session is null
+  };
 
-  // Upload helper
+  // File selection
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) =>
+    setFile(e.target.files?.[0] ?? null);
+
+  // Upload image
   const uploadImage = async (f: File) => {
     const path = `${Date.now()}_${f.name}`;
     const { data: uploadData, error } = await supabase.storage
@@ -57,32 +62,32 @@ export default function HomePage() {
     }
     const {
       data: { publicUrl },
-    } = supabase.storage.from('stories').getPublicUrl(uploadData.path);
+    } = supabase.storage
+      .from('stories')
+      .getPublicUrl(uploadData.path);
     return publicUrl;
   };
 
-  // Submit a new moment
+  // Submit new moment
   const handleSubmit = async () => {
     if (!newPost.trim() && !file) return;
     let mediaUrl: string | null = null;
     if (file) mediaUrl = await uploadImage(file);
 
-    const { error } = await supabase
-      .from('moments')
-      .insert([
-        {
-          text: newPost.trim(),
-          media_url: mediaUrl,
-          likes: 0,
-          user_id: session?.user?.id,
-          user_email: session?.user?.email ?? '',
-        },
-      ]);
+    const { error } = await supabase.from('moments').insert([
+      {
+        text: newPost.trim(),
+        media_url: mediaUrl,
+        likes: 0,
+        user_id: session?.user?.id,
+        user_email: session?.user?.email ?? '',
+      },
+    ]);
     if (error) console.error(error);
     else {
       setNewPost('');
       setFile(null);
-      // reload
+      // reload feed
       const { data } = await supabase
         .from('moments')
         .select('*')
@@ -91,7 +96,7 @@ export default function HomePage() {
     }
   };
 
-  // Like & Delete
+  // Like and delete
   const handleLike = async (id: string) => {
     await supabase.rpc('increment_likes', { row_id: id });
     setPosts((prev) =>
@@ -106,11 +111,13 @@ export default function HomePage() {
 
   return (
     <main className="max-w-2xl mx-auto p-6 space-y-8 font-sans">
-      {/* Welcome & Sign-In Prompt */}
-      <section className="bg-white p-6 rounded-xl shadow text-center space-y-2">
-        <h2 className="text-2xl font-bold text-[#1414A0]">
-          Welcome to SuckThumb.com
-        </h2>
+      {/* Logo & Auth Prompt */}
+      <section className="bg-white p-6 rounded-xl shadow text-center">
+        <img
+          src="/logo.png"
+          alt="SuckThumb Logo"
+          className="mx-auto h-16 mb-4"
+        />
         {!session ? (
           <p className="text-gray-600">
             Please{' '}
@@ -120,9 +127,12 @@ export default function HomePage() {
             to post your story.
           </p>
         ) : (
-          <p className="text-gray-600">
-            Signed in as <strong>{session.user.email}</strong>
-          </p>
+          <div className="flex flex-col sm:flex-row justify-center items-center gap-4 text-gray-600">
+            <span>Signed in as <strong>{session.user.email}</strong></span>
+            <Button variant="outline" size="sm" onClick={handleSignOut}>
+              Sign Out
+            </Button>
+          </div>
         )}
       </section>
 
@@ -178,11 +188,9 @@ export default function HomePage() {
               key={post.id}
               className="bg-white p-4 rounded-lg shadow space-y-2"
             >
-              {/* Show author */}
               <p className="text-xs text-gray-500">
                 Posted by {post.user_email}
               </p>
-
               {post.media_url && (
                 <img
                   src={post.media_url}
@@ -191,7 +199,6 @@ export default function HomePage() {
                 />
               )}
               <p className="text-gray-800">{post.text}</p>
-
               <div className="flex justify-between items-center text-sm text-gray-500">
                 <span>
                   {moment(post.created_at).format('DD/MM/YYYY HH:mm')}
@@ -203,7 +210,6 @@ export default function HomePage() {
                   >
                     ❤️ {post.likes}
                   </Button>
-                  {/* Only owner sees Delete */}
                   {session?.user?.id === post.user_id && (
                     <Button
                       variant="ghost"
