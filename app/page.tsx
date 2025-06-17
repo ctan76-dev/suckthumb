@@ -28,7 +28,7 @@ export default function HomePage() {
   const [newPost, setNewPost] = useState('');
   const [file, setFile] = useState<File | null>(null);
 
-  // 1) Load feed
+  // Load feed
   useEffect(() => {
     (async () => {
       const { data, error } = await supabase
@@ -40,16 +40,16 @@ export default function HomePage() {
     })();
   }, [supabase]);
 
-  // 2) Sign out
+  // Sign out
   const handleSignOut = async () => {
     await supabase.auth.signOut();
   };
 
-  // 3) File selection
+  // File selection
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) =>
     setFile(e.target.files?.[0] ?? null);
 
-  // 4) Upload image helper
+  // Upload image helper
   const uploadImage = async (f: File) => {
     const path = `${Date.now()}_${f.name}`;
     const { data: uploadData, error } = await supabase.storage
@@ -65,7 +65,7 @@ export default function HomePage() {
     return publicUrl;
   };
 
-  // 5) Submit a new moment
+  // Submit a new moment
   const handleSubmit = async () => {
     if (!newPost.trim() && !file) return;
     let mediaUrl: string | null = null;
@@ -92,7 +92,7 @@ export default function HomePage() {
     }
   };
 
-  // 6) Like & delete handlers
+  // Like & delete handlers
   const handleLike = async (id: string) => {
     await supabase.rpc('increment_likes', { row_id: id });
     setPosts((prev) =>
@@ -125,7 +125,10 @@ export default function HomePage() {
         {!session ? (
           <p className="text-gray-600">
             Please{' '}
-            <Link href="/signin" className="text-blue-600 hover:underline">
+            <Link
+              href="/signin"
+              className="text-blue-600 hover:underline"
+            >
               sign in
             </Link>{' '}
             to post your story.
@@ -146,10 +149,11 @@ export default function HomePage() {
         )}
       </section>
 
-      {/* Hero Section (no H1) */}
+      {/* Hero Section */}
       <section className="bg-white p-8 rounded-xl shadow border border-[#1414A0] text-center">
         <p className="text-[#1414A0]">
-          Got rejected, missed a chance, kena scolded? Vent it here — rant, laugh, or heal. SHARE IT!
+          Got rejected, missed a chance, kena scolded? Vent it here — rant,
+          laugh, or heal. SHARE IT!
         </p>
       </section>
 
