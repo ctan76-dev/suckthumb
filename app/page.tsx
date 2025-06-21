@@ -2,10 +2,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import {
-  useSession,
-  useSupabaseClient,
-} from '@supabase/auth-helpers-react';
+import { useSession, useSupabaseClient } from '@supabase/auth-helpers-react';
 import Link from 'next/link';
 import moment from 'moment';
 import ReactMarkdown from 'react-markdown';
@@ -37,7 +34,7 @@ export default function HomePage() {
   const [newPost, setNewPost] = useState('');
   const [file, setFile] = useState<File | null>(null);
 
-  // 1) Load moments with their likes relationship
+  // Load moments with their likes relationship
   const fetchPosts = async () => {
     const { data, error } = await supabase
       .from('moments')
@@ -57,16 +54,16 @@ export default function HomePage() {
     fetchPosts();
   }, [supabase]);
 
-  // 2) Sign out
+  // Sign out
   const handleSignOut = async () => {
     await supabase.auth.signOut();
   };
 
-  // 3) File selection
+  // File selection
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) =>
     setFile(e.target.files?.[0] ?? null);
 
-  // 4) Upload image helper
+  // Upload image helper
   const uploadImage = async (f: File) => {
     const path = `${Date.now()}_${f.name}`;
     const { data: uploadData, error } = await supabase.storage
@@ -82,7 +79,7 @@ export default function HomePage() {
     return publicUrl;
   };
 
-  // 5) Submit a new moment
+  // Submit a new moment
   const handleSubmit = async () => {
     if (!newPost.trim() && !file) return;
     let mediaUrl: string | null = null;
@@ -92,7 +89,7 @@ export default function HomePage() {
       {
         text: newPost.trim(),
         media_url: mediaUrl,
-        likes: 0, // keep for backwards compatibility or remove if unused
+        likes: 0,
         user_id: session?.user?.id,
         user_email: session?.user?.email ?? '',
       },
@@ -106,20 +103,29 @@ export default function HomePage() {
     }
   };
 
-  // 6) Like handler: one like per user per post
+  // Like & unlike handlers
   const handleLike = async (postId: string) => {
     if (!session) return;
     const { error } = await supabase
       .from('post_likes')
       .insert({ post_id: postId, user_id: session.user.id });
     if (error && error.code !== '23505') {
-      // ignore duplicate key errors (already liked)
       console.error('Like error:', error);
     }
     fetchPosts();
   };
 
-  // 7) Delete handler
+  const handleUnlike = async (postId: string) => {
+    if (!session) return;
+    const { error } = await supabase
+      .from('post_likes')
+      .delete()
+      .match({ post_id: postId, user_id: session.user.id });
+    if (error) console.error('Unlike error:', error);
+    fetchPosts();
+  };
+
+  // Delete handler
   const handleDelete = async (postId: string) => {
     if (!confirm('Delete this moment?')) return;
     await supabase.from('moments').delete().eq('id', postId);
@@ -159,12 +165,12 @@ export default function HomePage() {
       {/* Hero */}
       <section className="bg-white p-8 rounded-xl shadow border border-[#1414A0] text-center">
         <p className="text-[#1414A0]">
-          Got rejected, missed a chance, kena scolded? Vent it here — rant, laugh,
-          or heal. SHARE IT!
+          Got rejected, missed a chance, kena scolded? Vent it here — rant,
+          laugh, or heal. SHARE IT!
         </p>
       </section>
 
-      {/* Post Form */}
+      {/* Post Form (signed-in only) */}
       {session && (
         <section className="bg-white p-6 rounded-lg shadow space-y-4">
           <textarea
@@ -217,7 +223,7 @@ export default function HomePage() {
                 {post.media_url && (
                   <img
                     src={post.media_url}
-                    alt=""
+                    alt="Uploaded"
                     className="w-full object-cover rounded"
                   />
                 )}
@@ -244,7 +250,11 @@ export default function HomePage() {
                   <div className="flex gap-2">
                     <Button
                       variant={userHasLiked ? 'solid' : 'ghost'}
-                      onClick={() => handleLike(post.id)}
+                      onClick={() =>
+                        userHasLiked
+                          ? handleUnlike(post.id)
+                          : handleLike(post.id)
+                      }
                     >
                       ❤️ {likesCount}
                     </Button>
@@ -255,7 +265,7 @@ export default function HomePage() {
                       >
                         <Trash className="h-4 w-4" />
                       </Button>
-                    )}
+                    ))}
                   </div>
                 </div>
               </div>
