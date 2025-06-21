@@ -16,7 +16,7 @@ export default function SignInPage() {
   const [password, setPassword] = useState('');
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  // Redirect home once logged in
+  // Redirect home if already logged in
   useEffect(() => {
     if (session) router.push('/');
   }, [session, router]);
@@ -40,19 +40,18 @@ export default function SignInPage() {
   };
 
   return (
-    <main className="max-w-md mx-auto p-6 space-y-6">
-      <h1 className="text-2xl font-bold">Sign In</h1>
+    <main className="min-h-screen flex flex-col justify-center px-4 py-8 max-w-md mx-auto space-y-6">
+      <h1 className="text-3xl font-bold text-center">Sign In</h1>
 
-      {errorMsg && <p className="text-red-500">{errorMsg}</p>}
+      {errorMsg && <p className="text-center text-red-500">{errorMsg}</p>}
 
-      {/* Google button with visible label */}
       <Button
         onClick={handleGoogleSignIn}
         className="
           flex items-center justify-center gap-2
           w-full py-2 px-4
           border border-gray-300 rounded
-          bg-white text-gray-700
+          bg-white text-gray-800 font-medium
           hover:bg-gray-50
         "
       >
@@ -62,25 +61,24 @@ export default function SignInPage() {
 
       <div className="text-center text-sm text-gray-500">or</div>
 
-      {/* Email/Password form */}
       <form onSubmit={handleEmailSignIn} className="space-y-4">
         <div>
-          <label className="block mb-1">Email</label>
+          <label className="block mb-1 font-medium">Email</label>
           <input
             type="email"
             required
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            onChange={e => setEmail(e.target.value)}
             className="w-full p-2 border rounded"
           />
         </div>
         <div>
-          <label className="block mb-1">Password</label>
+          <label className="block mb-1 font-medium">Password</label>
           <input
             type="password"
             required
             value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            onChange={e => setPassword(e.target.value)}
             className="w-full p-2 border rounded"
           />
         </div>
@@ -89,9 +87,9 @@ export default function SignInPage() {
         </Button>
       </form>
 
-      <p className="text-center text-sm text-gray-500">
+      <p className="text-center text-sm">
         Don’t have an account?{' '}
-        <Link href="/signup" className="text-blue-600 hover:underline">
+        <Link href="/signup" className="text-blue-600 font-semibold hover:underline">
           Sign Up
         </Link>
       </p>

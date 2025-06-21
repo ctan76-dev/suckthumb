@@ -37,6 +37,7 @@ export default function SignUpPage() {
     e.preventDefault();
     setErrorMsg(null);
     setLoading(true);
+
     const { error } = await supabase.auth.signUp({ email, password });
     setLoading(false);
 
@@ -48,19 +49,18 @@ export default function SignUpPage() {
   };
 
   return (
-    <main className="max-w-md mx-auto p-6 space-y-6">
-      <h1 className="text-2xl font-bold">Sign Up</h1>
+    <main className="min-h-screen flex flex-col justify-center px-4 py-8 max-w-md mx-auto space-y-6">
+      <h1 className="text-3xl font-bold text-center">Sign Up</h1>
 
-      {errorMsg && <p className="text-red-500">{errorMsg}</p>}
+      {errorMsg && <p className="text-center text-red-500">{errorMsg}</p>}
 
-      {/* Google button with visible label */}
       <Button
         onClick={handleGoogleSignUp}
         className="
           flex items-center justify-center gap-2
           w-full py-2 px-4
           border border-gray-300 rounded
-          bg-white text-gray-700
+          bg-white text-gray-800 font-medium
           hover:bg-gray-50
         "
       >
@@ -70,25 +70,24 @@ export default function SignUpPage() {
 
       <div className="text-center text-sm text-gray-500">or</div>
 
-      {/* Email/Password form */}
       <form onSubmit={handleEmailSignUp} className="space-y-4">
         <div>
-          <label className="block mb-1">Email</label>
+          <label className="block mb-1 font-medium">Email</label>
           <input
             type="email"
             required
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            onChange={e => setEmail(e.target.value)}
             className="w-full p-2 border rounded"
           />
         </div>
         <div>
-          <label className="block mb-1">Password</label>
+          <label className="block mb-1 font-medium">Password</label>
           <input
             type="password"
             required
             value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            onChange={e => setPassword(e.target.value)}
             className="w-full p-2 border rounded"
           />
         </div>
@@ -97,9 +96,9 @@ export default function SignUpPage() {
         </Button>
       </form>
 
-      <p className="text-center text-sm text-gray-500">
+      <p className="text-center text-sm">
         Already have an account?{' '}
-        <Link href="/signin" className="text-blue-600 hover:underline">
+        <Link href="/signin" className="text-blue-600 font-semibold hover:underline">
           Sign In
         </Link>
       </p>
