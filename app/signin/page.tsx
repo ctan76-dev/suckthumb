@@ -45,11 +45,7 @@ export default function SignInPage() {
       {errorMsg && <p className="text-red-500">{errorMsg}</p>}
 
       {/* Google button */}
-      <Button
-        variant="outline"
-        className="w-full"
-        onClick={handleGoogleSignIn}
-      >
+      <Button variant="outline" className="w-full" onClick={handleGoogleSignIn}>
         Continue with Google
       </Button>
 
