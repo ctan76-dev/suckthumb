@@ -37,7 +37,7 @@ export default function HomePage() {
   const [newPost, setNewPost] = useState('');
   const [file, setFile] = useState<File | null>(null);
 
-  // 1) Load feed
+  // Load feed
   useEffect(() => {
     (async () => {
       const { data, error } = await supabase
@@ -49,16 +49,16 @@ export default function HomePage() {
     })();
   }, [supabase]);
 
-  // 2) Sign out
+  // Sign out
   const handleSignOut = async () => {
     await supabase.auth.signOut();
   };
 
-  // 3) File select
+  // File selection
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) =>
     setFile(e.target.files?.[0] ?? null);
 
-  // 4) Upload image helper
+  // Upload image helper
   const uploadImage = async (f: File) => {
     const path = `${Date.now()}_${f.name}`;
     const { data: uploadData, error } = await supabase.storage
@@ -74,7 +74,7 @@ export default function HomePage() {
     return publicUrl;
   };
 
-  // 5) Submit a new moment
+  // Submit new moment
   const handleSubmit = async () => {
     if (!newPost.trim() && !file) return;
     let mediaUrl: string | null = null;
@@ -102,19 +102,18 @@ export default function HomePage() {
     }
   };
 
-  // 6) Like & delete handlers
+  // Like & delete handlers
   const handleLike = async (id: string) => {
     await supabase.rpc('increment_likes', { row_id: id });
-    setPosts((prev) =>
-      prev.map((p) =>
-        p.id === id ? { ...p, likes: p.likes + 1 } : p
-      )
+    setPosts(prev =>
+      prev.map(p => (p.id === id ? { ...p, likes: p.likes + 1 } : p))
     );
   };
+
   const handleDelete = async (id: string) => {
     if (!confirm('Delete this moment?')) return;
     await supabase.from('moments').delete().eq('id', id);
-    setPosts((prev) => prev.filter((p) => p.id !== id));
+    setPosts(prev => prev.filter(p => p.id !== id));
   };
 
   return (
@@ -130,10 +129,7 @@ export default function HomePage() {
         {!session ? (
           <p className="text-gray-600">
             Please{' '}
-            <Link
-              href="/signin"
-              className="text-blue-600 hover:underline"
-            >
+            <Link href="/signin" className="text-blue-600 hover:underline">
               sign in
             </Link>{' '}
             to post your story.
@@ -153,8 +149,7 @@ export default function HomePage() {
       {/* Hero Section */}
       <section className="bg-white p-8 rounded-xl shadow border border-[#1414A0] text-center">
         <p className="text-[#1414A0]">
-          Got rejected, missed a chance, kena scolded? Vent it here — rant, laugh,
-          or heal. SHARE IT!
+          Got rejected, missed a chance, kena scolded? Vent it here — rant, laugh, or heal. SHARE IT!
         </p>
       </section>
 
@@ -166,7 +161,7 @@ export default function HomePage() {
             placeholder="What happened today?"
             className="w-full p-2 border rounded"
             value={newPost}
-            onChange={(e) => setNewPost(e.target.value)}
+            onChange={e => setNewPost(e.target.value)}
           />
           <div className="flex flex-col sm:flex-row gap-4">
             <label className="block sm:hidden">
@@ -194,7 +189,7 @@ export default function HomePage() {
             No moments yet. Be the first to share!
           </p>
         ) : (
-          posts.map((post) => (
+          posts.map(post => (
             <div
               key={post.id}
               className="bg-white p-4 rounded-lg shadow space-y-2"
@@ -209,25 +204,27 @@ export default function HomePage() {
                   className="w-full object-cover rounded"
                 />
               )}
-              {/* render text as Markdown so links are clickable */}
+              {/* Render Markdown with links opening in new tab */}
               <div className="prose">
-                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                <ReactMarkdown
+                  remarkPlugins={[remarkGfm]}
+                  components={{
+                    a: ({ node, ...props }) => (
+                      <a {...props} target="_blank" rel="noopener noreferrer" />
+                    ),
+                  }}
+                >
                   {post.text}
                 </ReactMarkdown>
               </div>
               <div className="flex justify-between items-center text-sm text-gray-500">
-                <span>
-                  {moment(post.created_at).format('DD/MM/YYYY HH:mm')}
-                </span>
+                <span>{moment(post.created_at).format('DD/MM/YYYY HH:mm')}</span>
                 <div className="flex gap-2">
                   <Button variant="ghost" onClick={() => handleLike(post.id)}>
                     ❤️ {post.likes}
                   </Button>
                   {session?.user?.id === post.user_id && (
-                    <Button
-                      variant="ghost"
-                      onClick={() => handleDelete(post.id)}
-                    >
+                    <Button variant="ghost" onClick={() => handleDelete(post.id)}>
                       <Trash className="h-4 w-4" />
                     </Button>
                   )}
