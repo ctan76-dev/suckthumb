@@ -8,6 +8,8 @@ import {
 } from '@supabase/auth-helpers-react';
 import Link from 'next/link';
 import moment from 'moment';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { Button } from '@/components/ui/button';
 import { Trash } from 'lucide-react';
 
@@ -15,8 +17,7 @@ import { Trash } from 'lucide-react';
 function maskEmail(email: string) {
   const [local, domain] = email.split('@');
   if (!domain) return email;
-  const first = local.charAt(0);
-  return `${first}…@${domain}`;
+  return `${local.charAt(0)}…@${domain}`;
 }
 
 type Post = {
@@ -36,7 +37,7 @@ export default function HomePage() {
   const [newPost, setNewPost] = useState('');
   const [file, setFile] = useState<File | null>(null);
 
-  // Load feed on mount
+  // 1) Load feed
   useEffect(() => {
     (async () => {
       const { data, error } = await supabase
@@ -48,16 +49,16 @@ export default function HomePage() {
     })();
   }, [supabase]);
 
-  // Sign out
+  // 2) Sign out
   const handleSignOut = async () => {
     await supabase.auth.signOut();
   };
 
-  // File selection
+  // 3) File select
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) =>
     setFile(e.target.files?.[0] ?? null);
 
-  // Upload helper
+  // 4) Upload image helper
   const uploadImage = async (f: File) => {
     const path = `${Date.now()}_${f.name}`;
     const { data: uploadData, error } = await supabase.storage
@@ -73,7 +74,7 @@ export default function HomePage() {
     return publicUrl;
   };
 
-  // Submit new moment
+  // 5) Submit a new moment
   const handleSubmit = async () => {
     if (!newPost.trim() && !file) return;
     let mediaUrl: string | null = null;
@@ -88,8 +89,9 @@ export default function HomePage() {
         user_email: session?.user?.email ?? '',
       },
     ]);
-    if (error) console.error('Insert error:', error);
-    else {
+    if (error) {
+      console.error('Insert error:', error);
+    } else {
       setNewPost('');
       setFile(null);
       const { data } = await supabase
@@ -100,7 +102,7 @@ export default function HomePage() {
     }
   };
 
-  // Like & delete handlers
+  // 6) Like & delete handlers
   const handleLike = async (id: string) => {
     await supabase.rpc('increment_likes', { row_id: id });
     setPosts((prev) =>
@@ -128,7 +130,10 @@ export default function HomePage() {
         {!session ? (
           <p className="text-gray-600">
             Please{' '}
-            <Link href="/signin" className="text-blue-600 hover:underline">
+            <Link
+              href="/signin"
+              className="text-blue-600 hover:underline"
+            >
               sign in
             </Link>{' '}
             to post your story.
@@ -204,7 +209,12 @@ export default function HomePage() {
                   className="w-full object-cover rounded"
                 />
               )}
-              <p className="text-gray-800">{post.text}</p>
+              {/* render text as Markdown so links are clickable */}
+              <div className="prose">
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                  {post.text}
+                </ReactMarkdown>
+              </div>
               <div className="flex justify-between items-center text-sm text-gray-500">
                 <span>
                   {moment(post.created_at).format('DD/MM/YYYY HH:mm')}
