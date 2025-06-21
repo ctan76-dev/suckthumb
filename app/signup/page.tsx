@@ -1,3 +1,4 @@
+// File: app/signup/page.tsx
 'use client';
 
 import { FormEvent, useState, useEffect } from 'react';
@@ -17,12 +18,10 @@ export default function SignUpPage() {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  // Redirect home if already logged in
   useEffect(() => {
     if (session) router.push('/');
   }, [session, router]);
 
-  // Google OAuth sign-up
   const handleGoogleSignUp = async () => {
     setErrorMsg(null);
     const { error } = await supabase.auth.signInWithOAuth({
@@ -32,15 +31,12 @@ export default function SignUpPage() {
     if (error) setErrorMsg(error.message);
   };
 
-  // Email/password sign-up
   const handleEmailSignUp = async (e: FormEvent) => {
     e.preventDefault();
     setErrorMsg(null);
     setLoading(true);
-
     const { error } = await supabase.auth.signUp({ email, password });
     setLoading(false);
-
     if (error) {
       setErrorMsg(error.message);
     } else {
@@ -49,7 +45,7 @@ export default function SignUpPage() {
   };
 
   return (
-    <main className="min-h-screen flex flex-col justify-center px-4 py-8 max-w-md mx-auto space-y-6">
+    <main className="flex flex-col px-4 py-8 max-w-md mx-auto space-y-6">
       <h1 className="text-3xl font-bold text-center">Sign Up</h1>
 
       {errorMsg && <p className="text-center text-red-500">{errorMsg}</p>}
@@ -77,7 +73,7 @@ export default function SignUpPage() {
             type="email"
             required
             value={email}
-            onChange={e => setEmail(e.target.value)}
+            onChange={(e) => setEmail(e.target.value)}
             className="w-full p-2 border rounded"
           />
         </div>
@@ -87,7 +83,7 @@ export default function SignUpPage() {
             type="password"
             required
             value={password}
-            onChange={e => setPassword(e.target.value)}
+            onChange={(e) => setPassword(e.target.value)}
             className="w-full p-2 border rounded"
           />
         </div>

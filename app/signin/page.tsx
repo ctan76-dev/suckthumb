@@ -1,3 +1,4 @@
+// File: app/signin/page.tsx
 'use client';
 
 import { FormEvent, useState, useEffect } from 'react';
@@ -21,7 +22,6 @@ export default function SignInPage() {
     if (session) router.push('/');
   }, [session, router]);
 
-  // Email/password sign-in
   const handleEmailSignIn = async (e: FormEvent) => {
     e.preventDefault();
     setErrorMsg(null);
@@ -29,7 +29,6 @@ export default function SignInPage() {
     if (error) setErrorMsg(error.message);
   };
 
-  // Google OAuth sign-in
   const handleGoogleSignIn = async () => {
     setErrorMsg(null);
     const { error } = await supabase.auth.signInWithOAuth({
@@ -40,7 +39,7 @@ export default function SignInPage() {
   };
 
   return (
-    <main className="min-h-screen flex flex-col justify-center px-4 py-8 max-w-md mx-auto space-y-6">
+    <main className="flex flex-col px-4 py-8 max-w-md mx-auto space-y-6">
       <h1 className="text-3xl font-bold text-center">Sign In</h1>
 
       {errorMsg && <p className="text-center text-red-500">{errorMsg}</p>}
@@ -68,7 +67,7 @@ export default function SignInPage() {
             type="email"
             required
             value={email}
-            onChange={e => setEmail(e.target.value)}
+            onChange={(e) => setEmail(e.target.value)}
             className="w-full p-2 border rounded"
           />
         </div>
@@ -78,7 +77,7 @@ export default function SignInPage() {
             type="password"
             required
             value={password}
-            onChange={e => setPassword(e.target.value)}
+            onChange={(e) => setPassword(e.target.value)}
             className="w-full p-2 border rounded"
           />
         </div>
