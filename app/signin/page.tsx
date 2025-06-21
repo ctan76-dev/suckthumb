@@ -1,4 +1,3 @@
-// File: app/signin/page.tsx
 'use client';
 
 import { FormEvent, useState, useEffect } from 'react';
@@ -6,6 +5,7 @@ import { useSupabaseClient, useSession } from '@supabase/auth-helpers-react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import { FcGoogle } from 'react-icons/fc';
 
 export default function SignInPage() {
   const supabase = useSupabaseClient();
@@ -45,12 +45,12 @@ export default function SignInPage() {
 
       {errorMsg && <p className="text-red-500">{errorMsg}</p>}
 
-      {/* Google button */}
+      {/* Google button with official colors */}
       <Button
-        variant="outline"
-        className="w-full"
         onClick={handleGoogleSignIn}
+        className="flex items-center justify-center gap-2 w-full py-2 px-4 border border-gray-300 rounded bg-white hover:bg-gray-50"
       >
+        <FcGoogle size={20} />
         Continue with Google
       </Button>
 
@@ -85,7 +85,10 @@ export default function SignInPage() {
 
       <p className="text-center text-sm text-gray-500">
         Don’t have an account?{' '}
-        <Link href="/signup" className="text-blue-600 hover:underline">
+        <Link
+          href="/signup"
+          className="text-blue-600 hover:underline"
+        >
           Sign Up
         </Link>
       </p>
