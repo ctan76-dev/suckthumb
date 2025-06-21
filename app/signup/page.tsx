@@ -1,4 +1,3 @@
-// File: app/signup/page.tsx
 'use client';
 
 import { FormEvent, useState, useEffect } from 'react';
@@ -6,6 +5,7 @@ import { useSupabaseClient, useSession } from '@supabase/auth-helpers-react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import { FcGoogle } from 'react-icons/fc';
 
 export default function SignUpPage() {
   const supabase = useSupabaseClient();
@@ -22,17 +22,6 @@ export default function SignUpPage() {
     if (session) router.push('/');
   }, [session, router]);
 
-  // Email/password sign-up
-  const handleEmailSignUp = async (e: FormEvent) => {
-    e.preventDefault();
-    setErrorMsg(null);
-    setLoading(true);
-    const { error } = await supabase.auth.signUp({ email, password });
-    setLoading(false);
-    if (error) setErrorMsg(error.message);
-    else router.push('/signin?from=signup');
-  };
-
   // Google OAuth sign-up
   const handleGoogleSignUp = async () => {
     setErrorMsg(null);
@@ -43,22 +32,38 @@ export default function SignUpPage() {
     if (error) setErrorMsg(error.message);
   };
 
+  // Email/password sign-up
+  const handleEmailSignUp = async (e: FormEvent) => {
+    e.preventDefault();
+    setErrorMsg(null);
+    setLoading(true);
+    const { error } = await supabase.auth.signUp({ email, password });
+    setLoading(false);
+    if (error) {
+      setErrorMsg(error.message);
+    } else {
+      router.push('/signin?from=signup');
+    }
+  };
+
   return (
     <main className="max-w-md mx-auto p-6 space-y-6">
       <h1 className="text-2xl font-bold">Sign Up</h1>
 
       {errorMsg && <p className="text-red-500">{errorMsg}</p>}
 
+      {/* Google button with official colors */}
       <Button
-        variant="outline"
-        className="w-full"
         onClick={handleGoogleSignUp}
+        className="flex items-center justify-center gap-2 w-full py-2 px-4 border border-gray-300 rounded bg-white hover:bg-gray-50"
       >
+        <FcGoogle size={20} />
         Continue with Google
       </Button>
 
       <div className="text-center text-sm text-gray-500">or</div>
 
+      {/* Email/Password form */}
       <form onSubmit={handleEmailSignUp} className="space-y-4">
         <div>
           <label className="block mb-1">Email</label>
@@ -87,7 +92,10 @@ export default function SignUpPage() {
 
       <p className="text-center text-sm text-gray-500">
         Already have an account?{' '}
-        <Link href="/signin" className="text-blue-600 hover:underline">
+        <Link
+          href="/signin"
+          className="text-blue-600 hover:underline"
+        >
           Sign In
         </Link>
       </p>
