@@ -48,13 +48,19 @@ export default function SignInPage() {
 
       {errorMsg && <p className="text-red-500">{errorMsg}</p>}
 
-      {/* Google button with label */}
+      {/* Google button with visible label */}
       <Button
         onClick={handleGoogleSignIn}
-        className="flex items-center justify-center gap-2 w-full py-2 px-4 border border-gray-300 rounded bg-white hover:bg-gray-50"
+        className="
+          flex items-center justify-center gap-2
+          w-full py-2 px-4
+          border border-gray-300 rounded
+          bg-white text-gray-700
+          hover:bg-gray-50
+        "
       >
         <FcGoogle size={20} />
-        Connect with Google
+        <span>Connect with Google</span>
       </Button>
 
       <div className="text-center text-sm text-gray-500">or</div>

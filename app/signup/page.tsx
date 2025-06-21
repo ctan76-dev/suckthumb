@@ -17,6 +17,7 @@ export default function SignUpPage() {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
+  // Redirect home if already logged in
   useEffect(() => {
     if (session) router.push('/');
   }, [session, router]);
@@ -39,7 +40,6 @@ export default function SignUpPage() {
 
     const { error } = await supabase.auth.signUp({ email, password });
     setLoading(false);
-
     if (error) {
       setErrorMsg(error.message);
     } else {
@@ -53,13 +53,19 @@ export default function SignUpPage() {
 
       {errorMsg && <p className="text-red-500">{errorMsg}</p>}
 
-      {/* Google button with label */}
+      {/* Google button with visible label */}
       <Button
         onClick={handleGoogleSignUp}
-        className="flex items-center justify-center gap-2 w-full py-2 px-4 border border-gray-300 rounded bg-white hover:bg-gray-50"
+        className="
+          flex items-center justify-center gap-2
+          w-full py-2 px-4
+          border border-gray-300 rounded
+          bg-white text-gray-700
+          hover:bg-gray-50
+        "
       >
         <FcGoogle size={20} />
-        Connect with Google
+        <span>Connect with Google</span>
       </Button>
 
       <div className="text-center text-sm text-gray-500">or</div>
