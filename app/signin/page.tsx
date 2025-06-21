@@ -22,7 +22,8 @@ export default function SignUpPage() {
     if (session) router.push('/');
   }, [session, router]);
 
-  const handleSignUp = async (e: FormEvent) => {
+  // Email/password sign-up
+  const handleEmailSignUp = async (e: FormEvent) => {
     e.preventDefault();
     setErrorMsg(null);
     setLoading(true);
@@ -33,9 +34,22 @@ export default function SignUpPage() {
     if (error) {
       setErrorMsg(error.message);
     } else {
-      // Optionally show a “check your email” toast here
+      // optionally tell user to check email, then send them to sign-in
       router.push('/signin?from=signup');
     }
+  };
+
+  // Google OAuth sign-up (actually same as sign-in)
+  const handleGoogleSignUp = async () => {
+    setErrorMsg(null);
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        // after login it'll return here
+        redirectTo: window.location.origin + '/',
+      },
+    });
+    if (error) setErrorMsg(error.message);
   };
 
   return (
@@ -44,7 +58,19 @@ export default function SignUpPage() {
 
       {errorMsg && <p className="text-red-500">{errorMsg}</p>}
 
-      <form onSubmit={handleSignUp} className="space-y-4">
+      {/* Google button */}
+      <Button
+        variant="outline"
+        className="w-full"
+        onClick={handleGoogleSignUp}
+      >
+        Continue with Google
+      </Button>
+
+      <div className="text-center text-sm text-gray-500">or</div>
+
+      {/* Email/Password form */}
+      <form onSubmit={handleEmailSignUp} className="space-y-4">
         <div>
           <label className="block mb-1">Email</label>
           <input
