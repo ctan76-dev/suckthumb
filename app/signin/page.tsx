@@ -1,4 +1,4 @@
-// File: app/signup/page.tsx
+// File: app/signin/page.tsx
 'use client';
 
 import { FormEvent, useState, useEffect } from 'react';
@@ -7,7 +7,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 
-export default function SignUpPage() {
+export default function SignInPage() {
   const supabase = useSupabaseClient();
   const session = useSession();
   const router = useRouter();
@@ -15,46 +15,33 @@ export default function SignUpPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
 
-  // If already signed in, send them home
+  // Redirect home once logged in
   useEffect(() => {
     if (session) router.push('/');
   }, [session, router]);
 
-  // Email/password sign-up
-  const handleEmailSignUp = async (e: FormEvent) => {
+  // Email/password sign-in
+  const handleEmailSignIn = async (e: FormEvent) => {
     e.preventDefault();
     setErrorMsg(null);
-    setLoading(true);
-
-    const { error } = await supabase.auth.signUp({ email, password });
-    setLoading(false);
-
-    if (error) {
-      setErrorMsg(error.message);
-    } else {
-      // optionally tell user to check email, then send them to sign-in
-      router.push('/signin?from=signup');
-    }
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) setErrorMsg(error.message);
   };
 
-  // Google OAuth sign-up (actually same as sign-in)
-  const handleGoogleSignUp = async () => {
+  // Google OAuth sign-in
+  const handleGoogleSignIn = async () => {
     setErrorMsg(null);
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: {
-        // after login it'll return here
-        redirectTo: window.location.origin + '/',
-      },
+      options: { redirectTo: window.location.origin + '/' },
     });
     if (error) setErrorMsg(error.message);
   };
 
   return (
     <main className="max-w-md mx-auto p-6 space-y-6">
-      <h1 className="text-2xl font-bold">Sign Up</h1>
+      <h1 className="text-2xl font-bold">Sign In</h1>
 
       {errorMsg && <p className="text-red-500">{errorMsg}</p>}
 
@@ -62,7 +49,7 @@ export default function SignUpPage() {
       <Button
         variant="outline"
         className="w-full"
-        onClick={handleGoogleSignUp}
+        onClick={handleGoogleSignIn}
       >
         Continue with Google
       </Button>
@@ -70,14 +57,14 @@ export default function SignUpPage() {
       <div className="text-center text-sm text-gray-500">or</div>
 
       {/* Email/Password form */}
-      <form onSubmit={handleEmailSignUp} className="space-y-4">
+      <form onSubmit={handleEmailSignIn} className="space-y-4">
         <div>
           <label className="block mb-1">Email</label>
           <input
             type="email"
             required
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            onChange={e => setEmail(e.target.value)}
             className="w-full p-2 border rounded"
           />
         </div>
@@ -87,20 +74,19 @@ export default function SignUpPage() {
             type="password"
             required
             value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            onChange={e => setPassword(e.target.value)}
             className="w-full p-2 border rounded"
           />
         </div>
-
-        <Button type="submit" className="w-full" disabled={loading}>
-          {loading ? 'Signing up…' : 'Sign Up with Email'}
+        <Button type="submit" className="w-full">
+          Sign In with Email
         </Button>
       </form>
 
       <p className="text-center text-sm text-gray-500">
-        Already have an account?{' '}
-        <Link href="/signin" className="text-blue-600 hover:underline">
-          Sign In
+        Don’t have an account?{' '}
+        <Link href="/signup" className="text-blue-600 hover:underline">
+          Sign Up
         </Link>
       </p>
     </main>
