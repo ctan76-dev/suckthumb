@@ -1,22 +1,26 @@
+// File: app/signin/page.tsx
 'use client';
 
-import { FormEvent, useState, useEffect } from 'react';
-import Link from 'next/link';
+import React, { FormEvent, useState, useEffect } from 'react';
 import { useSupabaseClient, useSession } from '@supabase/auth-helpers-react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 
 export default function SignInPage() {
   const supabase = useSupabaseClient();
   const session = useSession();
   const router = useRouter();
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  // If already signed in, go home
+  // Redirect home once logged in
   useEffect(() => {
-    if (session) router.push('/');
+    if (session) {
+      router.push('/');
+    }
   }, [session, router]);
 
   // Email/password sign-in
@@ -27,12 +31,12 @@ export default function SignInPage() {
     if (error) setErrorMsg(error.message);
   };
 
-  // Google OAuth
+  // Google OAuth sign-in
   const handleGoogleSignIn = async () => {
     setErrorMsg(null);
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: window.location.origin }
+      options: { redirectTo: window.location.origin + '/' },
     });
     if (error) setErrorMsg(error.message);
   };
@@ -43,22 +47,23 @@ export default function SignInPage() {
 
       {errorMsg && <p className="text-red-500 text-center">{errorMsg}</p>}
 
-      {/* Google Button */}
+      {/* Google button */}
       <Button
         variant="outline"
-        onClick={handleGoogleSignIn}
         className="w-full flex items-center justify-center gap-2"
+        onClick={handleGoogleSignIn}
       >
-        <span className="text-xl">G</span>
+        {/* You can replace FcGoogle with an <img> or SVG if you like */}
+        <span>🔴</span>
         <span>Connect with Google</span>
       </Button>
 
       <div className="text-center text-sm text-gray-500">or</div>
 
-      {/* Email / Password */}
+      {/* Email/Password form */}
       <form onSubmit={handleEmailSignIn} className="space-y-4">
         <div>
-          <label className="block mb-1">Email</label>
+          <label className="block mb-1 font-medium">Email</label>
           <input
             type="email"
             required
@@ -68,7 +73,7 @@ export default function SignInPage() {
           />
         </div>
         <div>
-          <label className="block mb-1">Password</label>
+          <label className="block mb-1 font-medium">Password</label>
           <input
             type="password"
             required
