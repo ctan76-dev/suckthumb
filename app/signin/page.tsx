@@ -25,10 +25,7 @@ export default function SignInPage() {
   const handleEmailSignIn = async (e: FormEvent) => {
     e.preventDefault();
     setErrorMsg(null);
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) setErrorMsg(error.message);
   };
 

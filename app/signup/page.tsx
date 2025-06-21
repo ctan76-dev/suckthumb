@@ -37,9 +37,9 @@ export default function SignUpPage() {
     e.preventDefault();
     setErrorMsg(null);
     setLoading(true);
-
     const { error } = await supabase.auth.signUp({ email, password });
     setLoading(false);
+
     if (error) {
       setErrorMsg(error.message);
     } else {
