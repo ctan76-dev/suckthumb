@@ -25,7 +25,10 @@ export default function SignInPage() {
   const handleEmailSignIn = async (e: FormEvent) => {
     e.preventDefault();
     setErrorMsg(null);
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
     if (error) setErrorMsg(error.message);
   };
 
@@ -45,13 +48,13 @@ export default function SignInPage() {
 
       {errorMsg && <p className="text-red-500">{errorMsg}</p>}
 
-      {/* Google button with official colors */}
+      {/* Google button with label */}
       <Button
         onClick={handleGoogleSignIn}
         className="flex items-center justify-center gap-2 w-full py-2 px-4 border border-gray-300 rounded bg-white hover:bg-gray-50"
       >
         <FcGoogle size={20} />
-        Continue with Google
+        Connect with Google
       </Button>
 
       <div className="text-center text-sm text-gray-500">or</div>
@@ -64,7 +67,7 @@ export default function SignInPage() {
             type="email"
             required
             value={email}
-            onChange={e => setEmail(e.target.value)}
+            onChange={(e) => setEmail(e.target.value)}
             className="w-full p-2 border rounded"
           />
         </div>
@@ -74,7 +77,7 @@ export default function SignInPage() {
             type="password"
             required
             value={password}
-            onChange={e => setPassword(e.target.value)}
+            onChange={(e) => setPassword(e.target.value)}
             className="w-full p-2 border rounded"
           />
         </div>
@@ -85,10 +88,7 @@ export default function SignInPage() {
 
       <p className="text-center text-sm text-gray-500">
         Don’t have an account?{' '}
-        <Link
-          href="/signup"
-          className="text-blue-600 hover:underline"
-        >
+        <Link href="/signup" className="text-blue-600 hover:underline">
           Sign Up
         </Link>
       </p>

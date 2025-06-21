@@ -17,7 +17,6 @@ export default function SignUpPage() {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  // Redirect home if already logged in
   useEffect(() => {
     if (session) router.push('/');
   }, [session, router]);
@@ -37,8 +36,10 @@ export default function SignUpPage() {
     e.preventDefault();
     setErrorMsg(null);
     setLoading(true);
+
     const { error } = await supabase.auth.signUp({ email, password });
     setLoading(false);
+
     if (error) {
       setErrorMsg(error.message);
     } else {
@@ -52,13 +53,13 @@ export default function SignUpPage() {
 
       {errorMsg && <p className="text-red-500">{errorMsg}</p>}
 
-      {/* Google button with official colors */}
+      {/* Google button with label */}
       <Button
         onClick={handleGoogleSignUp}
         className="flex items-center justify-center gap-2 w-full py-2 px-4 border border-gray-300 rounded bg-white hover:bg-gray-50"
       >
         <FcGoogle size={20} />
-        Continue with Google
+        Connect with Google
       </Button>
 
       <div className="text-center text-sm text-gray-500">or</div>
@@ -71,7 +72,7 @@ export default function SignUpPage() {
             type="email"
             required
             value={email}
-            onChange={e => setEmail(e.target.value)}
+            onChange={(e) => setEmail(e.target.value)}
             className="w-full p-2 border rounded"
           />
         </div>
@@ -81,7 +82,7 @@ export default function SignUpPage() {
             type="password"
             required
             value={password}
-            onChange={e => setPassword(e.target.value)}
+            onChange={(e) => setPassword(e.target.value)}
             className="w-full p-2 border rounded"
           />
         </div>
@@ -92,10 +93,7 @@ export default function SignUpPage() {
 
       <p className="text-center text-sm text-gray-500">
         Already have an account?{' '}
-        <Link
-          href="/signin"
-          className="text-blue-600 hover:underline"
-        >
+        <Link href="/signin" className="text-blue-600 hover:underline">
           Sign In
         </Link>
       </p>
