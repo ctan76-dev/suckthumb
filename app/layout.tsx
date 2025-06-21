@@ -15,7 +15,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <head />  {/* Next.js will inject your <title> & <meta> from app/head.tsx */}
+      <head />        {/* Injects app/head.tsx */}
       <body className="overflow-auto">
         <Providers>
           {children}
