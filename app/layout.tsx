@@ -1,12 +1,18 @@
 // File: app/layout.tsx
-'use client';
 
-import './globals.css';                // your Tailwind styles
-import { Providers } from '../lib/providers';  // ← go up one level, into lib/
+import './globals.css';
+import { Providers } from '../lib/providers';
 
-export const metadata = { /* … */ };
+export const metadata = {
+  title: 'SuckThumb',
+  description: 'Share your moments and feel better.',
+};
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
   return (
     <html lang="en">
       <head />
