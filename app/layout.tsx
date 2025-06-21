@@ -1,8 +1,7 @@
 // File: app/layout.tsx
--import './globals.css';
--import { Providers } from '@/lib/providers';
-+import './globals.css';
-+import { Providers } from '../lib/providers';  // <-- relative path up to root/lib
+
+import './globals.css';
+import { Providers } from '../lib/providers';
 
 export const metadata = {
   title: 'SuckThumb',
@@ -16,9 +15,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <head />
+      <head />       {/* Next.js will inject app/head.tsx here */}
       <body>
-        <Providers>
+        <Providers> {/* Wraps all pages in your Supabase context */}
           {children}
         </Providers>
       </body>
