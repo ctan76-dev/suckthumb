@@ -1,6 +1,8 @@
 // File: app/layout.tsx
-import './globals.css';              // ← ensure your Tailwind CSS is loaded
-import { Providers } from '@/lib/providers'; // or adjust the path if your providers.tsx lives elsewhere
+-import './globals.css';
+-import { Providers } from '@/lib/providers';
++import './globals.css';
++import { Providers } from '../lib/providers';  // <-- relative path up to root/lib
 
 export const metadata = {
   title: 'SuckThumb',
@@ -14,9 +16,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <head />                        {/* Next will inject your app/head.tsx here */}
+      <head />
       <body>
-        <Providers>                  {/* Supabase Auth context */}
+        <Providers>
           {children}
         </Providers>
       </body>
