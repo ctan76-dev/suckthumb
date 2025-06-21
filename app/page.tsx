@@ -30,11 +30,12 @@ type Post = {
 export default function HomePage() {
   const session = useSession();
   const supabase = useSupabaseClient();
+
   const [posts, setPosts] = useState<Post[]>([]);
   const [newPost, setNewPost] = useState('');
   const [file, setFile] = useState<File | null>(null);
 
-  // Load moments with their likes relationship
+  // Fetch moments + likes
   const fetchPosts = async () => {
     const { data, error } = await supabase
       .from('moments')
@@ -60,10 +61,11 @@ export default function HomePage() {
   };
 
   // File selection
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) =>
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFile(e.target.files?.[0] ?? null);
+  };
 
-  // Upload image helper
+  // Upload helper
   const uploadImage = async (f: File) => {
     const path = `${Date.now()}_${f.name}`;
     const { data: uploadData, error } = await supabase.storage
@@ -83,8 +85,9 @@ export default function HomePage() {
   const handleSubmit = async () => {
     if (!newPost.trim() && !file) return;
     let mediaUrl: string | null = null;
-    if (file) mediaUrl = await uploadImage(file);
-
+    if (file) {
+      mediaUrl = await uploadImage(file);
+    }
     const { error } = await supabase.from('moments').insert([
       {
         text: newPost.trim(),
@@ -103,7 +106,7 @@ export default function HomePage() {
     }
   };
 
-  // Like & unlike handlers
+  // Like / Unlike
   const handleLike = async (postId: string) => {
     if (!session) return;
     const { error } = await supabase
@@ -125,7 +128,7 @@ export default function HomePage() {
     fetchPosts();
   };
 
-  // Delete handler
+  // Delete
   const handleDelete = async (postId: string) => {
     if (!confirm('Delete this moment?')) return;
     await supabase.from('moments').delete().eq('id', postId);
@@ -165,12 +168,12 @@ export default function HomePage() {
       {/* Hero */}
       <section className="bg-white p-8 rounded-xl shadow border border-[#1414A0] text-center">
         <p className="text-[#1414A0]">
-          Got rejected, missed a chance, kena scolded? Vent it here — rant,
-          laugh, or heal. SHARE IT!
+          Got rejected, missed a chance, kena scolded? Vent it here — rant, laugh,
+          or heal. SHARE IT!
         </p>
       </section>
 
-      {/* Post Form (signed-in only) */}
+      {/* Post Form */}
       {session && (
         <section className="bg-white p-6 rounded-lg shadow space-y-4">
           <textarea
@@ -223,7 +226,7 @@ export default function HomePage() {
                 {post.media_url && (
                   <img
                     src={post.media_url}
-                    alt="Uploaded"
+                    alt=""
                     className="w-full object-cover rounded"
                   />
                 )}
@@ -232,11 +235,7 @@ export default function HomePage() {
                     remarkPlugins={[remarkGfm]}
                     components={{
                       a: ({ node, ...props }) => (
-                        <a
-                          {...props}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        />
+                        <a {...props} target="_blank" rel="noopener noreferrer" />
                       ),
                     }}
                   >
@@ -265,7 +264,7 @@ export default function HomePage() {
                       >
                         <Trash className="h-4 w-4" />
                       </Button>
-                    ))}
+                    )}
                   </div>
                 </div>
               </div>
