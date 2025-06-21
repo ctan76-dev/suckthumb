@@ -1,4 +1,3 @@
-// File: app/signin/page.tsx
 'use client';
 
 import React, { FormEvent, useState, useEffect } from 'react';
@@ -42,25 +41,25 @@ export default function SignInPage() {
   };
 
   return (
-    <main className="max-w-md mx-auto p-6 space-y-6">
+    // ← make this at least full-screen tall so you can scroll
+    <main className="min-h-screen max-w-md mx-auto p-6 space-y-6">
       <h1 className="text-2xl font-bold text-center">Sign In</h1>
 
       {errorMsg && <p className="text-red-500 text-center">{errorMsg}</p>}
 
-      {/* Google button */}
+      {/* Google */}
       <Button
         variant="outline"
         className="w-full flex items-center justify-center gap-2"
         onClick={handleGoogleSignIn}
       >
-        {/* You can replace FcGoogle with an <img> or SVG if you like */}
         <span>🔴</span>
         <span>Connect with Google</span>
       </Button>
 
       <div className="text-center text-sm text-gray-500">or</div>
 
-      {/* Email/Password form */}
+      {/* Email/Password */}
       <form onSubmit={handleEmailSignIn} className="space-y-4">
         <div>
           <label className="block mb-1 font-medium">Email</label>
