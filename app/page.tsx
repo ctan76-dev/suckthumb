@@ -35,7 +35,7 @@ export default function HomePage() {
   const [newPost, setNewPost] = useState('');
   const [file, setFile] = useState<File | null>(null);
 
-  // Fetch moments + likes
+  // Fetch moments with their likes relationship
   const fetchPosts = async () => {
     const { data, error } = await supabase
       .from('moments')
@@ -58,12 +58,12 @@ export default function HomePage() {
   // Sign out
   const handleSignOut = async () => {
     await supabase.auth.signOut();
+    // Optionally clear posts or redirect
   };
 
   // File selection
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) =>
     setFile(e.target.files?.[0] ?? null);
-  };
 
   // Upload helper
   const uploadImage = async (f: File) => {
@@ -102,20 +102,21 @@ export default function HomePage() {
     } else {
       setNewPost('');
       setFile(null);
-      fetchPosts();
+      await fetchPosts();
     }
   };
 
-  // Like / Unlike
+  // Like / Unlike handlers
   const handleLike = async (postId: string) => {
     if (!session) return;
     const { error } = await supabase
       .from('post_likes')
       .insert({ post_id: postId, user_id: session.user.id });
+    // ignore duplicate key errors (already liked)
     if (error && error.code !== '23505') {
       console.error('Like error:', error);
     }
-    fetchPosts();
+    await fetchPosts();
   };
 
   const handleUnlike = async (postId: string) => {
@@ -125,14 +126,14 @@ export default function HomePage() {
       .delete()
       .match({ post_id: postId, user_id: session.user.id });
     if (error) console.error('Unlike error:', error);
-    fetchPosts();
+    await fetchPosts();
   };
 
   // Delete
   const handleDelete = async (postId: string) => {
     if (!confirm('Delete this moment?')) return;
     await supabase.from('moments').delete().eq('id', postId);
-    fetchPosts();
+    await fetchPosts();
   };
 
   return (
@@ -226,7 +227,7 @@ export default function HomePage() {
                 {post.media_url && (
                   <img
                     src={post.media_url}
-                    alt=""
+                    alt="Uploaded"
                     className="w-full object-cover rounded"
                   />
                 )}
@@ -235,7 +236,11 @@ export default function HomePage() {
                     remarkPlugins={[remarkGfm]}
                     components={{
                       a: ({ node, ...props }) => (
-                        <a {...props} target="_blank" rel="noopener noreferrer" />
+                        <a
+                          {...props}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        />
                       ),
                     }}
                   >
