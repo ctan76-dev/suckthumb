@@ -22,7 +22,7 @@ export default function HomePage() {
   const [posts, setPosts] = useState<Post[]>([]);
   const [newPost, setNewPost] = useState('');
 
-  // Fetch existing posts
+  // Load posts
   const fetchPosts = async () => {
     const { data, error } = await supabase
       .from('moments')
@@ -36,9 +36,9 @@ export default function HomePage() {
     fetchPosts();
   }, []);
 
-  // Submit a new post
+  // Insert a new post (only if signed in)
   const handleSubmit = async () => {
-    if (!newPost.trim()) return;
+    if (!newPost.trim() || !session) return;
     const { error } = await supabase
       .from('moments')
       .insert([{ text: newPost.trim(), likes: 0 }]);
@@ -49,7 +49,7 @@ export default function HomePage() {
     }
   };
 
-  // Like / Unlike
+  // Like a post
   const handleLike = async (id: string) => {
     const { error } = await supabase.rpc('increment_likes', { row_id: id });
     if (error) console.error('Error liking post:', error);
@@ -60,9 +60,9 @@ export default function HomePage() {
     }
   };
 
-  // Delete
+  // Delete a post
   const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this post?')) return;
+    if (!session || !confirm('Delete this post?')) return;
     const { error } = await supabase.from('moments').delete().eq('id', id);
     if (error) console.error('Delete error:', error);
     else setPosts((prev) => prev.filter((p) => p.id !== id));
@@ -70,26 +70,9 @@ export default function HomePage() {
 
   return (
     <main className="max-w-xl mx-auto p-4 space-y-6">
-      {/* ==== Gated UI: always-visible on mobile/desktop ==== */}
-      {!session ? (
-        <div className="bg-white p-6 rounded-xl shadow text-center space-y-3">
-          <p className="text-lg text-gray-700">
-            Please{' '}
-            <Link href="/signin" className="text-blue-600 hover:underline">
-              Sign In
-            </Link>{' '}
-            to post your story.
-          </p>
-          <p className="text-sm text-gray-600">
-            New user?{' '}
-            <Link href="/signup" className="text-blue-600 hover:underline">
-              Sign Up
-            </Link>
-          </p>
-        </div>
-      ) : (
+      {/* ——— Gate the form ——— */}
+      {session ? (
         <>
-          {/* ==== Post submission form ==== */}
           <div className="bg-blue-50 p-4 rounded-xl shadow text-center">
             <h1 className="text-xl font-semibold text-[#1414A0]">
               Suck Thumb? Share It!
@@ -112,45 +95,63 @@ export default function HomePage() {
             placeholder="What happened today?"
             className="bg-white"
           />
-
-          {/* ==== Moments feed ==== */}
-          <div className="space-y-4">
-            {posts.map((post) => (
-              <div
-                key={post.id}
-                className="bg-white p-4 rounded-xl shadow border"
-              >
-                <p className="text-gray-800 whitespace-pre-line">{post.text}</p>
-                <div className="flex justify-between items-center mt-2 text-sm text-gray-500">
-                  <span>
-                    {moment(post.created_at).format('DD/MM/YYYY, HH:mm:ss')}
-                  </span>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="ghost"
-                      className="text-red-500"
-                      onClick={() => handleLike(post.id)}
-                    >
-                      ❤️ {post.likes}
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      onClick={() => handleDelete(post.id)}
-                    >
-                      <Trash className="h-4 w-4 text-gray-500 hover:text-red-500" />
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            ))}
-            {posts.length === 0 && (
-              <p className="text-center text-gray-500">
-                No moments yet. Be the first to share!
-              </p>
-            )}
-          </div>
         </>
+      ) : (
+        <div className="bg-white p-6 rounded-xl shadow text-center space-y-3">
+          <p className="text-lg text-gray-700">
+            Please{' '}
+            <Link href="/signin" className="text-blue-600 hover:underline">
+              Sign In
+            </Link>{' '}
+            to post your story.
+          </p>
+          <p className="text-sm text-gray-600">
+            New user?{' '}
+            <Link href="/signup" className="text-blue-600 hover:underline">
+              Sign Up
+            </Link>
+          </p>
+        </div>
       )}
+
+      {/* ——— Always show the feed ——— */}
+      <div className="space-y-4">
+        {posts.map((post) => (
+          <div
+            key={post.id}
+            className="bg-white p-4 rounded-xl shadow border"
+          >
+            <p className="text-gray-800 whitespace-pre-line">{post.text}</p>
+            <div className="flex justify-between items-center mt-2 text-sm text-gray-500">
+              <span>
+                {moment(post.created_at).format('DD/MM/YYYY, HH:mm:ss')}
+              </span>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="ghost"
+                  className="text-red-500"
+                  onClick={() => handleLike(post.id)}
+                >
+                  ❤️ {post.likes}
+                </Button>
+                {session && (
+                  <Button
+                    variant="ghost"
+                    onClick={() => handleDelete(post.id)}
+                  >
+                    <Trash className="h-4 w-4 text-gray-500 hover:text-red-500" />
+                  </Button>
+                )}
+              </div>
+            </div>
+          </div>
+        ))}
+        {posts.length === 0 && (
+          <p className="text-center text-gray-500">
+            No moments yet. Be the first to share!
+          </p>
+        )}
+      </div>
     </main>
   );
 }
