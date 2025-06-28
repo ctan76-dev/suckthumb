@@ -17,6 +17,14 @@ type Post = {
   user_id: string;
 };
 
+function maskEmail(email: string) {
+  const [local, domain] = email.split('@');
+  if (local.length <= 2) {
+    return `*@@${domain}`;
+  }
+  return `${local[0]}***${local.slice(-1)}@${domain}`;
+}
+
 export default function HomePage() {
   const supabase = useSupabaseClient();
   const session = useSession();
@@ -26,7 +34,7 @@ export default function HomePage() {
   const [newPost, setNewPost] = useState('');
   const [likedIds, setLikedIds] = useState<Set<string>>(new Set());
 
-  // 1️⃣ load posts and, if logged in, your liked post IDs
+  // 1️⃣ Load posts and, if logged in, your liked post IDs
   useEffect(() => {
     fetchPosts();
     if (userId) fetchMyLikes();
@@ -50,7 +58,7 @@ export default function HomePage() {
     else setLikedIds(new Set(data.map((r: any) => r.moment_id)));
   }
 
-  // 2️⃣ toggle like/unlike
+  // 2️⃣ Toggle like/unlike
   async function toggleLike(postId: string) {
     if (!userId) {
       alert('Please sign in to like.');
@@ -85,16 +93,16 @@ export default function HomePage() {
     fetchPosts();
   }
 
-  // 3️⃣ delete your own post
+  // 3️⃣ Delete your own post
   async function handleDelete(postId: string, ownerId: string) {
     if (ownerId !== userId) return;
-    if (!confirm('Are you sure?')) return;
+    if (!confirm('Are you sure you want to delete this post?')) return;
     const { error } = await supabase.from('moments').delete().eq('id', postId);
     if (error) console.error(error);
     else setPosts(p => p.filter(x => x.id !== postId));
   }
 
-  // 4️⃣ submit a new post
+  // 4️⃣ Submit a new post
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     if (!userId) {
@@ -123,16 +131,32 @@ export default function HomePage() {
           </span>
         </div>
         <div className="flex items-center space-x-4">
-          <Link href="/signin" className="text-[#1414A0] hover:underline">
-            Sign In
-          </Link>
-          <Link href="/signup">
-            <Button>Sign Up</Button>
-          </Link>
+          {session ? (
+            <>
+              <span className="text-gray-700">
+                Signed in as <strong>{maskEmail(session.user.email)}</strong>
+              </span>
+              <button
+                onClick={async () => { await supabase.auth.signOut(); }}
+                className="text-red-600 hover:underline"
+              >
+                Sign Out
+              </button>
+            </>
+          ) : (
+            <>
+              <Link href="/signin" className="text-[#1414A0] hover:underline">
+                Sign In
+              </Link>
+              <Link href="/signup">
+                <Button>Sign Up</Button>
+              </Link>
+            </>
+          )}
         </div>
       </nav>
 
-      {/* ─── MAIN CONTENT ───────────────────────────────────── */}
+      {/* ─── MAIN CONTENT ─────────────────────────────────────── */}
       <main className="max-w-xl mx-auto p-4 space-y-6">
         {/* Hero */}
         <div className="bg-blue-50 p-4 rounded-xl shadow text-center border">
