@@ -82,34 +82,25 @@ export default function HomePage() {
 
   return (
     <>
-      {/* ─── FULL-WIDTH BANNER ────────────────────────────────────── */}
-      <nav className="w-full bg-white border-b shadow">
-        <div className="max-w-5xl mx-auto flex items-center justify-between px-6 py-4">
-          <div className="flex items-center space-x-3">
-            <img
-              src="/logo.png"
-              alt="SuckThumb.com"
-              className="h-8 w-8"
-            />
-            <span className="text-xl font-bold text-[#1414A0]">
-              SuckThumb.com
-            </span>
-          </div>
-          <div className="flex items-center space-x-4">
-            <Link
-              href="/signin"
-              className="text-[#1414A0] hover:underline"
-            >
-              Sign In
-            </Link>
-            <Link href="/signup">
-              <Button>Sign Up</Button>
-            </Link>
-          </div>
+      {/* ─── FULL-WIDTH BANNER ───────────────────────────────── */}
+      <nav className="w-full flex items-center justify-between bg-white border-b shadow px-6 py-4">
+        <div className="flex items-center space-x-3">
+          <img src="/logo.png" alt="SuckThumb.com" className="h-8 w-8" />
+          <span className="text-xl font-bold text-[#1414A0]">
+            SuckThumb.com
+          </span>
+        </div>
+        <div className="flex items-center space-x-4">
+          <Link href="/signin" className="text-[#1414A0] hover:underline">
+            Sign In
+          </Link>
+          <Link href="/signup">
+            <Button>Sign Up</Button>
+          </Link>
         </div>
       </nav>
 
-      {/* ─── MAIN CONTENT ─────────────────────────────────────────── */}
+      {/* ─── MAIN CONTENT ───────────────────────────────────── */}
       <main className="max-w-xl mx-auto p-4 space-y-6">
         {/* Hero */}
         <div className="bg-blue-50 p-4 rounded-xl shadow text-center border">
