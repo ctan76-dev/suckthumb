@@ -149,14 +149,25 @@ export default function HomePage() {
           </p>
         </div>
 
-        {/* New post */}
+        {/* New post (chat) */}
         <form onSubmit={handleSubmit} className="space-y-4">
           <Textarea
-            rows={4}               // ← restore height
+            rows={6} // make taller
             value={newPost}
             onChange={e => setNewPost(e.target.value)}
             placeholder="What happened today?"
-            className="bg-white"
+            className="
+              w-full
+              bg-white
+              border-2 border-[#1414A0]
+              rounded-lg
+              p-4
+              text-base
+              shadow-sm
+              focus:outline-none
+              focus:ring-4 focus:ring-[#1414A0]/30
+              transition-shadow
+            "
           />
           <Button type="submit" className="w-full">
             Post Your Story
