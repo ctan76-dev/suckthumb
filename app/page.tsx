@@ -1,7 +1,7 @@
 // File: app/page.tsx
 'use client';
 
-import Link from 'next/link';                     // ← add this
+import Link from 'next/link';
 import { useState, useEffect, FormEvent } from 'react';
 import { useSupabaseClient, useSession } from '@supabase/auth-helpers-react';
 import moment from 'moment';
@@ -82,25 +82,34 @@ export default function HomePage() {
 
   return (
     <>
-      {/* ─── BANNER ─────────────────────────────────────────────── */}
-      <nav className="flex items-center justify-between max-w-xl mx-auto p-4">
-        <div className="flex items-center space-x-2">
-          <img src="/logo.png" alt="SuckThumb.com" className="h-8 w-8" />
-          <span className="text-xl font-bold text-[#1414A0]">
-            SuckThumb.com
-          </span>
-        </div>
-        <div className="space-x-4">
-          <Link href="/signin" className="text-[#1414A0] hover:underline">
-            Sign In
-          </Link>
-          <Link href="/signup" className="text-[#1414A0] hover:underline">
-            Sign Up
-          </Link>
+      {/* ─── FULL-WIDTH BANNER ────────────────────────────────────── */}
+      <nav className="w-full bg-white border-b shadow">
+        <div className="max-w-5xl mx-auto flex items-center justify-between px-6 py-4">
+          <div className="flex items-center space-x-3">
+            <img
+              src="/logo.png"
+              alt="SuckThumb.com"
+              className="h-8 w-8"
+            />
+            <span className="text-xl font-bold text-[#1414A0]">
+              SuckThumb.com
+            </span>
+          </div>
+          <div className="flex items-center space-x-4">
+            <Link
+              href="/signin"
+              className="text-[#1414A0] hover:underline"
+            >
+              Sign In
+            </Link>
+            <Link href="/signup">
+              <Button>Sign Up</Button>
+            </Link>
+          </div>
         </div>
       </nav>
 
-      {/* ─── MAIN CONTENT ──────────────────────────────────────── */}
+      {/* ─── MAIN CONTENT ─────────────────────────────────────────── */}
       <main className="max-w-xl mx-auto p-4 space-y-6">
         {/* Hero */}
         <div className="bg-blue-50 p-4 rounded-xl shadow text-center border">
