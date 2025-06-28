@@ -106,7 +106,7 @@ export default function HomePage() {
 
   return (
     <>
-      {/* Banner */}
+      {/* ─── BANNER (Waypoint 1) ───────────────────────────────── */}
       <nav className="w-full flex items-center justify-between bg-white border-b px-6 py-4 shadow">
         <div className="flex items-center space-x-3">
           <img src="/logo.png" alt="SuckThumb.com" className="h-8 w-8" />
@@ -138,10 +138,10 @@ export default function HomePage() {
         </div>
       </nav>
 
-      {/* Main */}
+      {/* ─── MAIN CONTENT (Waypoint 1) ───────────────────────────── */}
       <main className="max-w-xl mx-auto p-4 space-y-6">
         {/* Hero */}
-        <div className="bg-blue-50 p-4 rounded-xl shadow border text-center">
+        <div className="bg-blue-50 p-4 rounded-xl shadow text-center border">
           <h1 className="text-xl font-semibold">Suck Thumb? Share It!</h1>
           <p className="text-gray-700 mt-2">
             Got rejected, missed a chance, kena scolded? Vent it here — rant,
@@ -149,10 +149,10 @@ export default function HomePage() {
           </p>
         </div>
 
-        {/* New post (chat) */}
+        {/* New post form — only this “chat box” is freshly styled */}
         <form onSubmit={handleSubmit} className="space-y-4">
           <Textarea
-            rows={6} // make taller
+            rows={6}
             value={newPost}
             onChange={e => setNewPost(e.target.value)}
             placeholder="What happened today?"
@@ -160,12 +160,9 @@ export default function HomePage() {
               w-full
               bg-white
               border-2 border-[#1414A0]
-              rounded-lg
-              p-4
-              text-base
+              rounded-lg p-4 text-base
               shadow-sm
-              focus:outline-none
-              focus:ring-4 focus:ring-[#1414A0]/30
+              focus:outline-none focus:ring-4 focus:ring-[#1414A0]/30
               transition-shadow
             "
           />
@@ -174,13 +171,15 @@ export default function HomePage() {
           </Button>
         </form>
 
-        {/* Feed */}
+        {/* Posts feed */}
         <div className="space-y-4">
           {posts.map(post => (
             <div key={post.id} className="bg-white p-4 rounded-xl shadow border">
               <p className="text-gray-800 whitespace-pre-line">{post.text}</p>
               <div className="flex justify-between items-center mt-2 text-sm text-gray-500">
-                <span>{moment(post.created_at).format('DD/MM/YYYY, HH:mm:ss')}</span>
+                <span>
+                  {moment(post.created_at).format('DD/MM/YYYY, HH:mm:ss')}
+                </span>
                 <div className="flex items-center gap-4">
                   <Button
                     variant="ghost"
@@ -190,7 +189,10 @@ export default function HomePage() {
                     {likedIds.has(post.id) ? '💔' : '❤️'} {post.likes}
                   </Button>
                   {post.user_id === userId && (
-                    <Button variant="ghost" onClick={() => handleDelete(post.id, post.user_id)}>
+                    <Button
+                      variant="ghost"
+                      onClick={() => handleDelete(post.id, post.user_id)}
+                    >
                       <Trash className="h-4 w-4 text-gray-500 hover:text-red-500" />
                     </Button>
                   )}
