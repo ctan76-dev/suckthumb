@@ -1,6 +1,7 @@
 // File: app/page.tsx
 'use client';
 
+import Link from 'next/link';                     // ← add this
 import { useState, useEffect, FormEvent } from 'react';
 import { useSupabaseClient, useSession } from '@supabase/auth-helpers-react';
 import moment from 'moment';
@@ -24,7 +25,7 @@ export default function HomePage() {
   const [posts, setPosts] = useState<Post[]>([]);
   const [newPost, setNewPost] = useState('');
 
-  // Fetch all posts
+  // Fetch posts
   const fetchPosts = async () => {
     const { data, error } = await supabase
       .from('moments')
@@ -38,7 +39,7 @@ export default function HomePage() {
     fetchPosts();
   }, []);
 
-  // Submit a new post (must be signed in)
+  // Submit a new post
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (!userId) {
@@ -56,7 +57,7 @@ export default function HomePage() {
     }
   };
 
-  // Increment like (must be signed in)
+  // Like a post
   const handleLike = async (id: string) => {
     if (!userId) {
       alert('Please sign in to like.');
@@ -80,62 +81,85 @@ export default function HomePage() {
   };
 
   return (
-    <main className="max-w-xl mx-auto p-4 space-y-6">
-      {/* Hero */}
-      <div className="bg-blue-50 p-4 rounded-xl shadow text-center border">
-        <h1 className="text-xl font-semibold">Suck Thumb? Share It!</h1>
-        <p className="text-gray-700 mt-2">
-          Got rejected, missed a chance, kena scolded? Vent it here — rant,
-          laugh, or heal. SHARE IT!
-        </p>
-      </div>
+    <>
+      {/* ─── BANNER ─────────────────────────────────────────────── */}
+      <nav className="flex items-center justify-between max-w-xl mx-auto p-4">
+        <div className="flex items-center space-x-2">
+          <img src="/logo.png" alt="SuckThumb.com" className="h-8 w-8" />
+          <span className="text-xl font-bold text-[#1414A0]">
+            SuckThumb.com
+          </span>
+        </div>
+        <div className="space-x-4">
+          <Link href="/signin" className="text-[#1414A0] hover:underline">
+            Sign In
+          </Link>
+          <Link href="/signup" className="text-[#1414A0] hover:underline">
+            Sign Up
+          </Link>
+        </div>
+      </nav>
 
-      {/* New post form */}
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <Textarea
-          value={newPost}
-          onChange={(e) => setNewPost(e.target.value)}
-          placeholder="What happened today?"
-          className="bg-white"
-        />
-        <Button type="submit" className="w-full">
-          Post Your Story
-        </Button>
-      </form>
+      {/* ─── MAIN CONTENT ──────────────────────────────────────── */}
+      <main className="max-w-xl mx-auto p-4 space-y-6">
+        {/* Hero */}
+        <div className="bg-blue-50 p-4 rounded-xl shadow text-center border">
+          <h1 className="text-xl font-semibold">Suck Thumb? Share It!</h1>
+          <p className="text-gray-700 mt-2">
+            Got rejected, missed a chance, kena scolded? Vent it here — rant,
+            laugh, or heal. SHARE IT!
+          </p>
+        </div>
 
-      {/* Posts feed */}
-      <div className="space-y-4">
-        {posts.map((post) => (
-          <div
-            key={post.id}
-            className="bg-white p-4 rounded-xl shadow border"
-          >
-            <p className="text-gray-800 whitespace-pre-line">{post.text}</p>
-            <div className="flex justify-between items-center mt-2 text-sm text-gray-500">
-              <span>
-                {moment(post.created_at).format('DD/MM/YYYY, HH:mm:ss')}
-              </span>
-              <div className="flex items-center gap-4">
-                <Button
-                  variant="ghost"
-                  className="text-red-500"
-                  onClick={() => handleLike(post.id)}
-                >
-                  ❤️ {post.likes}
-                </Button>
-                {post.user_id === userId && (
+        {/* New post form */}
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <Textarea
+            value={newPost}
+            onChange={(e) => setNewPost(e.target.value)}
+            placeholder="What happened today?"
+            className="bg-white"
+          />
+          <Button type="submit" className="w-full">
+            Post Your Story
+          </Button>
+        </form>
+
+        {/* Posts feed */}
+        <div className="space-y-4">
+          {posts.map((post) => (
+            <div
+              key={post.id}
+              className="bg-white p-4 rounded-xl shadow border"
+            >
+              <p className="text-gray-800 whitespace-pre-line">{post.text}</p>
+              <div className="flex justify-between items-center mt-2 text-sm text-gray-500">
+                <span>
+                  {moment(post.created_at).format(
+                    'DD/MM/YYYY, HH:mm:ss'
+                  )}
+                </span>
+                <div className="flex items-center gap-4">
                   <Button
                     variant="ghost"
-                    onClick={() => handleDelete(post.id, post.user_id)}
+                    className="text-red-500"
+                    onClick={() => handleLike(post.id)}
                   >
-                    <Trash className="h-4 w-4 text-gray-500 hover:text-red-500" />
+                    ❤️ {post.likes}
                   </Button>
-                )}
+                  {post.user_id === userId && (
+                    <Button
+                      variant="ghost"
+                      onClick={() => handleDelete(post.id, post.user_id)}
+                    >
+                      <Trash className="h-4 w-4 text-gray-500 hover:text-red-500" />
+                    </Button>
+                  )}
+                </div>
               </div>
             </div>
-          </div>
-        ))}
-      </div>
-    </main>
+          ))}
+        </div>
+      </main>
+    </>
   );
 }
