@@ -1,115 +1,171 @@
 // File: app/page.tsx
 'use client';
 
-import Image from 'next/image';
+import { useState, useEffect, FormEvent } from 'react';
+import { useSupabaseClient, useSession } from '@supabase/auth-helpers-react';
 import Link from 'next/link';
-import { FormEvent, useState, useEffect } from 'react';
-import { useSupabaseClient } from '@supabase/auth-helpers-react';
 
-type Post = {
+type Moment = {
   id: string;
   text: string;
   created_at: string;
   likes: number;
+  user_id: string;
 };
 
 export default function HomePage() {
   const supabase = useSupabaseClient();
-  const [posts, setPosts] = useState<Post[]>([]);
+  const session = useSession();
+  const userId = session?.user.id || null;
+
+  const [moments, setMoments] = useState<Moment[]>([]);
+  const [likedIds, setLikedIds] = useState<Set<string>>(new Set());
   const [draft, setDraft] = useState('');
 
-  // load posts
+  // 1) Fetch moments and (if logged in) your likes
   useEffect(() => {
-    fetchPosts();
-  }, []);
+    fetchMoments();
+    if (userId) fetchMyLikes();
+  }, [userId]);
 
-  async function fetchPosts() {
-    const { data, error } = await supabase
+  async function fetchMoments() {
+    const { data } = await supabase
       .from('moments')
       .select('*')
       .order('created_at', { ascending: false });
-    if (!error && data) setPosts(data as Post[]);
+    setMoments(data || []);
   }
 
+  async function fetchMyLikes() {
+    const { data } = await supabase
+      .from('likes')
+      .select('moment_id')
+      .eq('user_id', userId);
+    setLikedIds(new Set(data?.map(l => l.moment_id)));
+  }
+
+  // 2) Toggle like / unlike
+  async function toggleLike(id: string) {
+    if (!userId) {
+      alert('Please sign in to like.');
+      return;
+    }
+    if (likedIds.has(id)) {
+      // unlike
+      await supabase
+        .from('likes')
+        .delete()
+        .eq('moment_id', id)
+        .eq('user_id', userId);
+      await supabase
+        .from('moments')
+        .update({ likes: moments.find(m => m.id === id)!.likes - 1 })
+        .eq('id', id);
+      likedIds.delete(id);
+    } else {
+      // like
+      await supabase
+        .from('likes')
+        .insert([{ user_id: userId, moment_id: id }]);
+      await supabase
+        .from('moments')
+        .update({ likes: moments.find(m => m.id === id)!.likes + 1 })
+        .eq('id', id);
+      likedIds.add(id);
+    }
+    setLikedIds(new Set(likedIds));
+    fetchMoments();
+  }
+
+  // 3) Delete only your own post
+  async function handleDelete(id: string, ownerId: string) {
+    if (ownerId !== userId) return;
+    if (!confirm('Are you sure you want to delete this post?')) return;
+    await supabase.from('moments').delete().eq('id', id);
+    fetchMoments();
+  }
+
+  // 4) Submit new moment, capturing user_id
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
-    if (!draft.trim()) return;
-    const { error } = await supabase.from('moments').insert([{ text: draft.trim(), likes: 0 }]);
-    if (!error) {
-      setDraft('');
-      fetchPosts();
+    if (!userId) {
+      alert('Please sign in to post.');
+      return;
     }
+    if (!draft.trim()) return;
+    await supabase.from('moments')
+      .insert([{ text: draft.trim(), likes: 0, user_id: userId }]);
+    setDraft('');
+    fetchMoments();
   }
 
-  async function handleLike(id: string) {
-    await supabase.rpc('increment_likes', { row_id: id });
-    setPosts((p) => p.map(x => x.id === id ? { ...x, likes: x.likes + 1 } : x));
-  }
-
-  async function handleDelete(id: string) {
-    if (!confirm('Really delete this?')) return;
-    await supabase.from('moments').delete().eq('id', id);
-    setPosts(p => p.filter(x => x.id !== id));
-  }
-
-  return (
-    <div className="min-h-screen bg-gray-50 text-gray-900 font-sans">
-      {/* NAV */}
-      <header className="flex items-center justify-between p-4 border-b">
-        <div className="flex items-center space-x-2">
-          <Image src="/logo.png" alt="SuckThumb" width={32} height={32} />
-          <span className="text-xl font-bold">SuckThumb</span>
+  // If not signed in, show the “please sign in” card
+  if (!userId) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="bg-white p-6 rounded-xl shadow-md text-center max-w-sm">
+          <p className="mb-2">Please{' '}
+            <Link href="/signin" className="text-blue-600 hover:underline">
+              Sign In
+            </Link>{' '}
+            to post your story.
+          </p>
+          <p className="text-sm text-gray-600">
+            New user?{' '}
+            <Link href="/signup" className="text-blue-600 hover:underline">
+              Sign Up
+            </Link>
+          </p>
         </div>
-        <nav className="space-x-4">
-          <Link href="/signin" className="hover:underline">Sign In</Link>
-          <Link href="/signup" className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700">
-            Sign Up
-          </Link>
-        </nav>
-      </header>
+      </div>
+    );
+  }
 
-      {/* HERO + POST FORM */}
-      <section className="max-w-3xl mx-auto p-6 space-y-6">
-        <h2 className="text-2xl md:text-3xl font-semibold text-center">
-          Got rejected, missed a chance, kena scolded?
-        </h2>
-        <p className="text-center">
-          Vent it here — rant, laugh, or heal. <strong>SHARE IT!</strong>
+  // Main feed for signed-in users
+  return (
+    <div className="min-h-screen bg-gray-50">
+      {/* Hero & new post form */}
+      <section className="bg-white p-6 rounded-xl shadow-md max-w-3xl mx-auto mt-8">
+        <h1 className="text-2xl font-bold mb-4">Got rejected, missed a chance, kena scolded?</h1>
+        <p className="text-gray-700 mb-4">
+          Vent it here — rant, laugh, or heal. SHARE IT!
         </p>
-
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} className="space-y-4">
           <textarea
             value={draft}
             onChange={e => setDraft(e.target.value)}
-            placeholder="Post your suck‐thumb moment…"
-            className="w-full h-32 p-4 border rounded-lg resize-none focus:outline-blue-500"
+            placeholder="What happened today?"
+            className="w-full p-3 border rounded resize-none h-24"
           />
-          <div className="mt-3 text-right">
-            <button
-              type="submit"
-              className="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-            >
-              Share it!
-            </button>
-          </div>
+          <button
+            type="submit"
+            className="w-full bg-blue-600 text-white py-2 rounded"
+          >
+            Post Your Story
+          </button>
         </form>
       </section>
 
-      {/* STORIES FEED */}
-      <main className="max-w-3xl mx-auto p-6 space-y-8">
-        <h3 className="text-lg font-medium border-b pb-2">STORIES</h3>
-        {posts.map(post => (
-          <article key={post.id} className="p-4 bg-white rounded-lg shadow-sm space-y-2">
-            <p className="whitespace-pre-wrap">{post.text}</p>
-            <div className="flex justify-between text-sm text-gray-500">
-              <span>{new Date(post.created_at).toLocaleString()}</span>
+      {/* Stories feed */}
+      <main className="max-w-3xl mx-auto p-6 space-y-6">
+        <h2 className="text-lg font-medium border-b pb-2">STORIES</h2>
+        {moments.map(m => (
+          <article
+            key={m.id}
+            className="bg-white p-4 rounded-lg shadow-sm"
+          >
+            <p className="whitespace-pre-line">{m.text}</p>
+            <div className="flex justify-between items-center text-sm text-gray-500 mt-3">
+              <span>{new Date(m.created_at).toLocaleString()}</span>
               <div className="flex items-center space-x-4">
-                <button onClick={() => handleLike(post.id)} className="hover:text-red-500">
-                  ❤️ {post.likes}
+                <button onClick={() => toggleLike(m.id)}>
+                  {likedIds.has(m.id) ? '💔' : '❤️'} {m.likes}
                 </button>
-                <button onClick={() => handleDelete(post.id)} className="hover:text-gray-800">
-                  🗑️
-                </button>
+                {m.user_id === userId && (
+                  <button onClick={() => handleDelete(m.id, m.user_id)}>
+                    🗑️
+                  </button>
+                )}
               </div>
             </div>
           </article>
