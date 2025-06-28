@@ -70,6 +70,14 @@ export default function HomePage() {
 
   return (
     <main className="max-w-xl mx-auto p-4 space-y-6">
+      {/* ——— Logo & Branding ——— */}
+      <header className="flex items-center justify-center space-x-3 py-4">
+        <img src="/logo.png" alt="SuckThumb Logo" className="h-12 w-12" />
+        <span className="text-2xl font-bold text-[#1414A0]">
+          SuckThumb.com
+        </span>
+      </header>
+
       {/* ——— Gate the form ——— */}
       {session ? (
         <>
