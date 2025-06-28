@@ -109,8 +109,8 @@ export default function HomePage() {
       {/* ─── BANNER (Waypoint 1) ───────────────────────────────── */}
       <nav className="w-full flex items-center justify-between bg-white border-b px-6 py-4 shadow">
         <div className="flex items-center space-x-3">
-          <img src="/logo.png" alt="SuckThumb.com" className="h-8 w-8" />
-          <span className="text-xl font-bold text-[#1414A0]">SuckThumb.com</span>
+          <img src="/logo.png" alt="SuckThumb" className="h-8 w-8" />
+          <span className="text-xl font-bold text-[#1414A0]">SuckThumb</span>
         </div>
         <div className="flex items-center space-x-4">
           {session ? (
@@ -144,12 +144,14 @@ export default function HomePage() {
         <div className="bg-blue-50 p-4 rounded-xl shadow text-center border">
           <h1 className="text-xl font-semibold">Suck Thumb? Share It!</h1>
           <p className="text-gray-700 mt-2">
-            Got rejected, missed a chance, kena scolded? Vent it here — rant,
-            laugh, or heal. SHARE IT!
+            Got rejected, missed chance, kena scolded?
+          </p>
+          <p className="text-gray-700">
+            Vent it here, rant, laugh or heal. Share it!
           </p>
         </div>
 
-        {/* New post form — only this “chat box” is freshly styled */}
+        {/* New post form (accented) */}
         <form onSubmit={handleSubmit} className="space-y-4">
           <Textarea
             rows={6}
