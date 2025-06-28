@@ -106,7 +106,7 @@ export default function HomePage() {
 
   return (
     <>
-      {/* ─── BANNER (Waypoint 1) ───────────────────────────────── */}
+      {/* BANNER */}
       <nav className="w-full flex items-center justify-between bg-white border-b px-6 py-4 shadow">
         <div className="flex items-center space-x-3">
           <img src="/logo.png" alt="SuckThumb" className="h-8 w-8" />
@@ -138,20 +138,19 @@ export default function HomePage() {
         </div>
       </nav>
 
-      {/* ─── MAIN CONTENT (Waypoint 1) ───────────────────────────── */}
+      {/* MAIN CONTENT */}
       <main className="max-w-xl mx-auto p-4 space-y-6">
-        {/* Hero */}
+        {/* HERO */}
         <div className="bg-blue-50 p-4 rounded-xl shadow text-center border">
-          <h1 className="text-xl font-semibold">Suck Thumb? Share It!</h1>
-          <p className="text-gray-700 mt-2">
+          <p className="text-xl font-semibold">
             Got rejected, missed chance, kena scolded?
           </p>
-          <p className="text-gray-700">
+          <p className="text-xl font-semibold mt-2">
             Vent it here, rant, laugh or heal. Share it!
           </p>
         </div>
 
-        {/* New post form (accented) */}
+        {/* NEW POST */}
         <form onSubmit={handleSubmit} className="space-y-4">
           <Textarea
             rows={6}
@@ -173,7 +172,7 @@ export default function HomePage() {
           </Button>
         </form>
 
-        {/* Posts feed */}
+        {/* POSTS FEED */}
         <div className="space-y-4">
           {posts.map(post => (
             <div key={post.id} className="bg-white p-4 rounded-xl shadow border">
