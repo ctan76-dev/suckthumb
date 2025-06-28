@@ -1,13 +1,10 @@
 // File: app/page.tsx
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
-import { useSupabaseClient, useSession } from '@supabase/auth-helpers-react';
-import moment from 'moment';
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import { Trash } from 'lucide-react';
+import { FormEvent, useState, useEffect } from 'react';
+import { useSupabaseClient } from '@supabase/auth-helpers-react';
 
 type Post = {
   id: string;
@@ -18,148 +15,106 @@ type Post = {
 
 export default function HomePage() {
   const supabase = useSupabaseClient();
-  const session = useSession();
   const [posts, setPosts] = useState<Post[]>([]);
-  const [newPost, setNewPost] = useState('');
+  const [draft, setDraft] = useState('');
 
-  // Load posts
-  const fetchPosts = async () => {
-    const { data, error } = await supabase
-      .from('moments')
-      .select('*')
-      .order('created_at', { ascending: false });
-    if (error) console.error('Error loading posts:', error);
-    else setPosts(data as Post[]);
-  };
-
+  // load posts
   useEffect(() => {
     fetchPosts();
   }, []);
 
-  // Insert a new post (only if signed in)
-  const handleSubmit = async () => {
-    if (!newPost.trim() || !session) return;
-    const { error } = await supabase
+  async function fetchPosts() {
+    const { data, error } = await supabase
       .from('moments')
-      .insert([{ text: newPost.trim(), likes: 0 }]);
-    if (error) console.error('Error adding post:', error);
-    else {
-      setNewPost('');
+      .select('*')
+      .order('created_at', { ascending: false });
+    if (!error && data) setPosts(data as Post[]);
+  }
+
+  async function handleSubmit(e: FormEvent) {
+    e.preventDefault();
+    if (!draft.trim()) return;
+    const { error } = await supabase.from('moments').insert([{ text: draft.trim(), likes: 0 }]);
+    if (!error) {
+      setDraft('');
       fetchPosts();
     }
-  };
+  }
 
-  // Like a post
-  const handleLike = async (id: string) => {
-    const { error } = await supabase.rpc('increment_likes', { row_id: id });
-    if (error) console.error('Error liking post:', error);
-    else {
-      setPosts((prev) =>
-        prev.map((p) => (p.id === id ? { ...p, likes: p.likes + 1 } : p))
-      );
-    }
-  };
+  async function handleLike(id: string) {
+    await supabase.rpc('increment_likes', { row_id: id });
+    setPosts((p) => p.map(x => x.id === id ? { ...x, likes: x.likes + 1 } : x));
+  }
 
-  // Delete a post
-  const handleDelete = async (id: string) => {
-    if (!session || !confirm('Delete this post?')) return;
-    const { error } = await supabase.from('moments').delete().eq('id', id);
-    if (error) console.error('Delete error:', error);
-    else setPosts((prev) => prev.filter((p) => p.id !== id));
-  };
+  async function handleDelete(id: string) {
+    if (!confirm('Really delete this?')) return;
+    await supabase.from('moments').delete().eq('id', id);
+    setPosts(p => p.filter(x => x.id !== id));
+  }
 
   return (
-    <main className="max-w-xl mx-auto p-4 space-y-6">
-      {/* ——— Logo & Branding ——— */}
-      <header className="flex items-center justify-center space-x-3 py-4">
-        <img src="/logo.png" alt="SuckThumb Logo" className="h-12 w-12" />
-        <span className="text-2xl font-bold text-[#1414A0]">
-          SuckThumb.com
-        </span>
+    <div className="min-h-screen bg-gray-50 text-gray-900 font-sans">
+      {/* NAV */}
+      <header className="flex items-center justify-between p-4 border-b">
+        <div className="flex items-center space-x-2">
+          <Image src="/logo.png" alt="SuckThumb" width={32} height={32} />
+          <span className="text-xl font-bold">SuckThumb</span>
+        </div>
+        <nav className="space-x-4">
+          <Link href="/signin" className="hover:underline">Sign In</Link>
+          <Link href="/signup" className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700">
+            Sign Up
+          </Link>
+        </nav>
       </header>
 
-      {/* ——— Gate the form ——— */}
-      {session ? (
-        <>
-          <div className="bg-blue-50 p-4 rounded-xl shadow text-center">
-            <h1 className="text-xl font-semibold text-[#1414A0]">
-              Suck Thumb? Share It!
-            </h1>
-            <p className="text-gray-700 mt-2">
-              Got rejected, missed a chance, kena scolded? Vent it here — rant,
-              laugh, or heal. SHARE IT!
-            </p>
-            <div className="mt-4 flex justify-center gap-4">
-              <Button onClick={handleSubmit}>🔵 Share Your Story</Button>
-              <Button variant="secondary" onClick={fetchPosts}>
-                🔵 Read Stories
-              </Button>
-            </div>
-          </div>
+      {/* HERO + POST FORM */}
+      <section className="max-w-3xl mx-auto p-6 space-y-6">
+        <h2 className="text-2xl md:text-3xl font-semibold text-center">
+          Got rejected, missed a chance, kena scolded?
+        </h2>
+        <p className="text-center">
+          Vent it here — rant, laugh, or heal. <strong>SHARE IT!</strong>
+        </p>
 
-          <Textarea
-            value={newPost}
-            onChange={(e) => setNewPost(e.target.value)}
-            placeholder="What happened today?"
-            className="bg-white"
+        <form onSubmit={handleSubmit}>
+          <textarea
+            value={draft}
+            onChange={e => setDraft(e.target.value)}
+            placeholder="Post your suck‐thumb moment…"
+            className="w-full h-32 p-4 border rounded-lg resize-none focus:outline-blue-500"
           />
-        </>
-      ) : (
-        <div className="bg-white p-6 rounded-xl shadow text-center space-y-3">
-          <p className="text-lg text-gray-700">
-            Please{' '}
-            <Link href="/signin" className="text-blue-600 hover:underline">
-              Sign In
-            </Link>{' '}
-            to post your story.
-          </p>
-          <p className="text-sm text-gray-600">
-            New user?{' '}
-            <Link href="/signup" className="text-blue-600 hover:underline">
-              Sign Up
-            </Link>
-          </p>
-        </div>
-      )}
+          <div className="mt-3 text-right">
+            <button
+              type="submit"
+              className="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+            >
+              Share it!
+            </button>
+          </div>
+        </form>
+      </section>
 
-      {/* ——— Always show the feed ——— */}
-      <div className="space-y-4">
-        {posts.map((post) => (
-          <div
-            key={post.id}
-            className="bg-white p-4 rounded-xl shadow border"
-          >
-            <p className="text-gray-800 whitespace-pre-line">{post.text}</p>
-            <div className="flex justify-between items-center mt-2 text-sm text-gray-500">
-              <span>
-                {moment(post.created_at).format('DD/MM/YYYY, HH:mm:ss')}
-              </span>
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="ghost"
-                  className="text-red-500"
-                  onClick={() => handleLike(post.id)}
-                >
+      {/* STORIES FEED */}
+      <main className="max-w-3xl mx-auto p-6 space-y-8">
+        <h3 className="text-lg font-medium border-b pb-2">STORIES</h3>
+        {posts.map(post => (
+          <article key={post.id} className="p-4 bg-white rounded-lg shadow-sm space-y-2">
+            <p className="whitespace-pre-wrap">{post.text}</p>
+            <div className="flex justify-between text-sm text-gray-500">
+              <span>{new Date(post.created_at).toLocaleString()}</span>
+              <div className="flex items-center space-x-4">
+                <button onClick={() => handleLike(post.id)} className="hover:text-red-500">
                   ❤️ {post.likes}
-                </Button>
-                {session && (
-                  <Button
-                    variant="ghost"
-                    onClick={() => handleDelete(post.id)}
-                  >
-                    <Trash className="h-4 w-4 text-gray-500 hover:text-red-500" />
-                  </Button>
-                )}
+                </button>
+                <button onClick={() => handleDelete(post.id)} className="hover:text-gray-800">
+                  🗑️
+                </button>
               </div>
             </div>
-          </div>
+          </article>
         ))}
-        {posts.length === 0 && (
-          <p className="text-center text-gray-500">
-            No moments yet. Be the first to share!
-          </p>
-        )}
-      </div>
-    </main>
+      </main>
+    </div>
   );
 }
