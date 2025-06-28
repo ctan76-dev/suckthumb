@@ -24,23 +24,78 @@ export default function HomePage() {
 
   const [posts, setPosts] = useState<Post[]>([]);
   const [newPost, setNewPost] = useState('');
+  const [likedIds, setLikedIds] = useState<Set<string>>(new Set());
 
-  // Fetch posts
-  const fetchPosts = async () => {
+  // 1️⃣ load posts and, if logged in, your liked post IDs
+  useEffect(() => {
+    fetchPosts();
+    if (userId) fetchMyLikes();
+  }, [userId]);
+
+  async function fetchPosts() {
     const { data, error } = await supabase
       .from('moments')
       .select('*')
       .order('created_at', { ascending: false });
     if (error) console.error(error);
     else setPosts(data as Post[]);
-  };
+  }
 
-  useEffect(() => {
+  async function fetchMyLikes() {
+    const { data, error } = await supabase
+      .from('likes')
+      .select('moment_id')
+      .eq('user_id', userId);
+    if (error) console.error(error);
+    else setLikedIds(new Set(data.map((r: any) => r.moment_id)));
+  }
+
+  // 2️⃣ toggle like/unlike
+  async function toggleLike(postId: string) {
+    if (!userId) {
+      alert('Please sign in to like.');
+      return;
+    }
+
+    if (likedIds.has(postId)) {
+      // unlike
+      await supabase
+        .from('likes')
+        .delete()
+        .eq('moment_id', postId)
+        .eq('user_id', userId);
+      await supabase
+        .from('moments')
+        .update({ likes: posts.find(p => p.id === postId)!.likes - 1 })
+        .eq('id', postId);
+      likedIds.delete(postId);
+    } else {
+      // like
+      await supabase
+        .from('likes')
+        .insert([{ user_id: userId, moment_id: postId }]);
+      await supabase
+        .from('moments')
+        .update({ likes: posts.find(p => p.id === postId)!.likes + 1 })
+        .eq('id', postId);
+      likedIds.add(postId);
+    }
+
+    setLikedIds(new Set(likedIds));
     fetchPosts();
-  }, []);
+  }
 
-  // Submit a new post
-  const handleSubmit = async (e: FormEvent) => {
+  // 3️⃣ delete your own post
+  async function handleDelete(postId: string, ownerId: string) {
+    if (ownerId !== userId) return;
+    if (!confirm('Are you sure?')) return;
+    const { error } = await supabase.from('moments').delete().eq('id', postId);
+    if (error) console.error(error);
+    else setPosts(p => p.filter(x => x.id !== postId));
+  }
+
+  // 4️⃣ submit a new post
+  async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     if (!userId) {
       alert('Please sign in to post.');
@@ -55,30 +110,7 @@ export default function HomePage() {
       setNewPost('');
       fetchPosts();
     }
-  };
-
-  // Like a post
-  const handleLike = async (id: string) => {
-    if (!userId) {
-      alert('Please sign in to like.');
-      return;
-    }
-    const { error } = await supabase.rpc('increment_likes', { row_id: id });
-    if (error) console.error(error);
-    else
-      setPosts((prev) =>
-        prev.map((p) => (p.id === id ? { ...p, likes: p.likes + 1 } : p))
-      );
-  };
-
-  // Delete your own post
-  const handleDelete = async (id: string, ownerId: string) => {
-    if (ownerId !== userId) return;
-    if (!confirm('Are you sure you want to delete this post?')) return;
-    const { error } = await supabase.from('moments').delete().eq('id', id);
-    if (error) console.error(error);
-    else setPosts((prev) => prev.filter((p) => p.id !== id));
-  };
+  }
 
   return (
     <>
@@ -115,7 +147,7 @@ export default function HomePage() {
         <form onSubmit={handleSubmit} className="space-y-4">
           <Textarea
             value={newPost}
-            onChange={(e) => setNewPost(e.target.value)}
+            onChange={e => setNewPost(e.target.value)}
             placeholder="What happened today?"
             className="bg-white"
           />
@@ -126,7 +158,7 @@ export default function HomePage() {
 
         {/* Posts feed */}
         <div className="space-y-4">
-          {posts.map((post) => (
+          {posts.map(post => (
             <div
               key={post.id}
               className="bg-white p-4 rounded-xl shadow border"
@@ -134,17 +166,15 @@ export default function HomePage() {
               <p className="text-gray-800 whitespace-pre-line">{post.text}</p>
               <div className="flex justify-between items-center mt-2 text-sm text-gray-500">
                 <span>
-                  {moment(post.created_at).format(
-                    'DD/MM/YYYY, HH:mm:ss'
-                  )}
+                  {moment(post.created_at).format('DD/MM/YYYY, HH:mm:ss')}
                 </span>
                 <div className="flex items-center gap-4">
                   <Button
                     variant="ghost"
-                    className="text-red-500"
-                    onClick={() => handleLike(post.id)}
+                    className={likedIds.has(post.id) ? 'text-red-500' : 'text-gray-500'}
+                    onClick={() => toggleLike(post.id)}
                   >
-                    ❤️ {post.likes}
+                    {likedIds.has(post.id) ? '💔' : '❤️'} {post.likes}
                   </Button>
                   {post.user_id === userId && (
                     <Button
