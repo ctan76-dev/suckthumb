@@ -17,8 +17,10 @@ type Post = {
   user_id: string;
 };
 
-function maskEmail(email: string) {
+// Now accepts undefined and provides a safe default
+function maskEmail(email: string = ''): string {
   const [local, domain] = email.split('@');
+  if (!domain) return 'anonymous';
   if (local.length <= 2) return `*@@${domain}`;
   return `${local[0]}***${local.slice(-1)}@${domain}`;
 }
@@ -42,7 +44,7 @@ export default function HomePage() {
       .from('moments')
       .select('*')
       .order('created_at', { ascending: false });
-    if (error) console.error(error);
+    if (error) console.error('Error loading posts:', error);
     else setPosts(data as Post[]);
   }
 
@@ -51,12 +53,15 @@ export default function HomePage() {
       .from('likes')
       .select('moment_id')
       .eq('user_id', userId);
-    if (error) console.error(error);
+    if (error) console.error('Error loading likes:', error);
     else setLikedIds(new Set(data.map((r: any) => r.moment_id)));
   }
 
   async function toggleLike(postId: string) {
-    if (!userId) { alert('Please sign in to like.'); return; }
+    if (!userId) {
+      alert('Please sign in to like.');
+      return;
+    }
     if (likedIds.has(postId)) {
       await supabase
         .from('likes')
@@ -86,18 +91,21 @@ export default function HomePage() {
     if (ownerId !== userId) return;
     if (!confirm('Delete this post?')) return;
     const { error } = await supabase.from('moments').delete().eq('id', id);
-    if (error) console.error(error);
+    if (error) console.error('Error deleting post:', error);
     else setPosts(p => p.filter(x => x.id !== id));
   }
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
-    if (!userId) { alert('Please sign in to post.'); return; }
+    if (!userId) {
+      alert('Please sign in to post.');
+      return;
+    }
     if (!newPost.trim()) return;
     const { error } = await supabase
       .from('moments')
       .insert([{ text: newPost.trim(), likes: 0, user_id: userId }]);
-    if (error) console.error(error);
+    if (error) console.error('Error adding post:', error);
     else {
       setNewPost('');
       loadPosts();
@@ -116,7 +124,7 @@ export default function HomePage() {
           {session ? (
             <>
               <span className="text-gray-700">
-                Signed in as <strong>{maskEmail(session.user.email)}</strong>
+                Signed in as <strong>{maskEmail(session?.user.email)}</strong>
               </span>
               <button
                 onClick={() => supabase.auth.signOut()}
@@ -150,7 +158,7 @@ export default function HomePage() {
           </p>
         </div>
 
-        {/* NEW POST */}
+        {/* NEW POST FORM */}
         <form onSubmit={handleSubmit} className="space-y-4">
           <Textarea
             rows={6}
