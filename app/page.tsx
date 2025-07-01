@@ -4,6 +4,8 @@
 import Link from 'next/link';
 import { useState, useEffect, FormEvent } from 'react';
 import { useSupabaseClient, useSession } from '@supabase/auth-helpers-react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import moment from 'moment';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -17,7 +19,7 @@ type Post = {
   user_id: string;
 };
 
-// Now accepts undefined and provides a safe default
+// Safely masks an email, accepts undefined
 function maskEmail(email: string = ''): string {
   const [local, domain] = email.split('@');
   if (!domain) return 'anonymous';
@@ -35,11 +37,11 @@ export default function HomePage() {
   const [likedIds, setLikedIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
-    loadPosts();
-    if (userId) loadMyLikes();
+    fetchPosts();
+    if (userId) fetchMyLikes();
   }, [userId]);
 
-  async function loadPosts() {
+  async function fetchPosts() {
     const { data, error } = await supabase
       .from('moments')
       .select('*')
@@ -48,7 +50,7 @@ export default function HomePage() {
     else setPosts(data as Post[]);
   }
 
-  async function loadMyLikes() {
+  async function fetchMyLikes() {
     const { data, error } = await supabase
       .from('likes')
       .select('moment_id')
@@ -84,7 +86,7 @@ export default function HomePage() {
       likedIds.add(postId);
     }
     setLikedIds(new Set(likedIds));
-    loadPosts();
+    fetchPosts();
   }
 
   async function handleDelete(id: string, ownerId: string) {
@@ -108,7 +110,7 @@ export default function HomePage() {
     if (error) console.error('Error adding post:', error);
     else {
       setNewPost('');
-      loadPosts();
+      fetchPosts();
     }
   }
 
@@ -118,7 +120,7 @@ export default function HomePage() {
       <nav className="w-full flex items-center justify-between bg-white border-b px-6 py-4 shadow">
         <div className="flex items-center space-x-3">
           <img src="/logo.png" alt="SuckThumb" className="h-8 w-8" />
-          <span className="text-xl font-bold text-[#1414A0]">SuckThumb</span>
+          <span className="text-xl font-bold text-[#1414A0]">SuckThumb.com</span>
         </div>
         <div className="flex items-center space-x-4">
           {session ? (
@@ -146,7 +148,7 @@ export default function HomePage() {
         </div>
       </nav>
 
-      {/* MAIN CONTENT */}
+      {/* MAIN */}
       <main className="max-w-xl mx-auto p-4 space-y-6">
         {/* HERO */}
         <div className="bg-blue-800 p-6 rounded-xl shadow text-center border border-blue-800">
@@ -158,7 +160,7 @@ export default function HomePage() {
           </p>
         </div>
 
-        {/* NEW POST FORM */}
+        {/* NEW POST */}
         <form onSubmit={handleSubmit} className="space-y-4">
           <Textarea
             rows={6}
@@ -181,7 +183,25 @@ export default function HomePage() {
         <div className="space-y-4">
           {posts.map(post => (
             <div key={post.id} className="bg-white p-4 rounded-xl shadow border">
-              <p className="text-gray-800 whitespace-pre-line">{post.text}</p>
+              <div className="text-gray-800 space-y-2">
+                <ReactMarkdown
+                  remarkPlugins={[remarkGfm]}
+                  components={{
+                    a: ({ href, children }) => (
+                      <a
+                        href={href}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 hover:underline"
+                      >
+                        {children}
+                      </a>
+                    ),
+                  }}
+                >
+                  {post.text}
+                </ReactMarkdown>
+              </div>
               <div className="flex justify-between items-center mt-2 text-sm text-gray-500">
                 <span>
                   {moment(post.created_at).format('DD/MM/YYYY, HH:mm:ss')}
