@@ -19,7 +19,6 @@ type Post = {
   user_id: string;
 };
 
-// Safely masks an email, accepts undefined
 function maskEmail(email: string = ''): string {
   const [local, domain] = email.split('@');
   if (!domain) return 'anonymous';
@@ -120,7 +119,7 @@ export default function HomePage() {
       <nav className="w-full flex items-center justify-between bg-white border-b px-6 py-4 shadow">
         <div className="flex items-center space-x-3">
           <img src="/logo.png" alt="SuckThumb" className="h-8 w-8" />
-          <span className="text-xl font-bold text-[#1414A0]">SuckThumb.com</span>
+          <span className="text-xl font-bold text-[#1414A0]">SuckThumb</span>
         </div>
         <div className="flex items-center space-x-4">
           {session ? (
@@ -148,28 +147,28 @@ export default function HomePage() {
         </div>
       </nav>
 
-      {/* MAIN */}
+      {/* MAIN CONTENT */}
       <main className="max-w-xl mx-auto p-4 space-y-6">
-        {/* HERO */}
-        <div className="bg-blue-800 p-6 rounded-xl shadow text-center border border-blue-800">
-          <p className="text-3xl font-bold text-white">
+        {/* HERO (20% smaller) */}
+        <div className="bg-blue-800 p-5 rounded-xl shadow text-center border border-blue-800">
+          <p className="text-2xl font-bold text-white">
             Got rejected, missed chance, kena scolded?
           </p>
-          <p className="text-xl text-white mt-3">
+          <p className="text-base text-white mt-3">
             Vent it here, rant, laugh or heal. Share it!
           </p>
         </div>
 
-        {/* NEW POST */}
+        {/* NEW POST FORM (20% smaller textbox) */}
         <form onSubmit={handleSubmit} className="space-y-4">
           <Textarea
-            rows={6}
+            rows={5}
             value={newPost}
             onChange={e => setNewPost(e.target.value)}
             placeholder="What happened today?"
             className="
               w-full bg-white border-2 border-[#1414A0]
-              rounded-lg p-4 text-base shadow-sm
+              rounded-lg p-3 text-sm shadow-sm
               focus:outline-none focus:ring-4 focus:ring-[#1414A0]/30
               transition-shadow
             "
