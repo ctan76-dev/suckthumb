@@ -9,7 +9,7 @@ import remarkGfm from 'remark-gfm';
 import moment from 'moment';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Trash } from 'lucide-react';
+import { Trash, User as UserIcon } from 'lucide-react';
 
 type Post = {
   id: string;
@@ -18,13 +18,6 @@ type Post = {
   likes: number;
   user_id: string;
 };
-
-function maskEmail(email: string = ''): string {
-  const [local, domain] = email.split('@');
-  if (!domain) return 'anonymous';
-  if (local.length <= 2) return `*@@${domain}`;
-  return `${local[0]}***${local.slice(-1)}@${domain}`;
-}
 
 export default function HomePage() {
   const supabase = useSupabaseClient();
@@ -124,23 +117,29 @@ export default function HomePage() {
         <div className="flex items-center space-x-4">
           {session ? (
             <>
-              <span className="text-gray-700">
-                Signed in as <strong>{maskEmail(session?.user.email)}</strong>
-              </span>
+              {session.user.user_metadata?.avatar_url ? (
+                <img
+                  src={session.user.user_metadata.avatar_url}
+                  alt="Your avatar"
+                  className="h-8 w-8 rounded-full object-cover"
+                />
+              ) : (
+                <UserIcon className="h-8 w-8 text-gray-500" />
+              )}
               <button
                 onClick={() => supabase.auth.signOut()}
-                className="text-red-600 hover:underline"
+                className="ml-3 text-red-600 hover:underline text-sm"
               >
                 Sign Out
               </button>
             </>
           ) : (
             <>
-              <Link href="/signin" className="text-[#1414A0] hover:underline">
+              <Link href="/signin" className="text-[#1414A0] hover:underline text-sm">
                 Sign In
               </Link>
               <Link href="/signup">
-                <Button>Sign Up</Button>
+                <Button size="sm">Sign Up</Button>
               </Link>
             </>
           )}
@@ -149,26 +148,26 @@ export default function HomePage() {
 
       {/* MAIN CONTENT */}
       <main className="max-w-xl mx-auto p-4 space-y-6">
-        {/* HERO (20% smaller) */}
-        <div className="bg-blue-800 p-5 rounded-xl shadow text-center border border-blue-800">
-          <p className="text-2xl font-bold text-white">
+        {/* HERO */}
+        <div className="bg-blue-800 p-6 rounded-xl shadow text-center border border-blue-800">
+          <p className="text-3xl font-bold text-white">
             Got rejected, missed chance, kena scolded?
           </p>
-          <p className="text-base text-white mt-3">
+          <p className="text-xl text-white mt-3">
             Vent it here, rant, laugh or heal. Share it!
           </p>
         </div>
 
-        {/* NEW POST FORM (20% smaller textbox) */}
+        {/* NEW POST FORM */}
         <form onSubmit={handleSubmit} className="space-y-4">
           <Textarea
-            rows={5}
+            rows={6}
             value={newPost}
             onChange={e => setNewPost(e.target.value)}
             placeholder="What happened today?"
             className="
               w-full bg-white border-2 border-[#1414A0]
-              rounded-lg p-3 text-sm shadow-sm
+              rounded-lg p-4 text-base shadow-sm
               focus:outline-none focus:ring-4 focus:ring-[#1414A0]/30
               transition-shadow
             "
