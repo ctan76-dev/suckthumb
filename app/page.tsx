@@ -1,4 +1,3 @@
-// File: app/page.tsx
 'use client';
 
 import Link from 'next/link';
@@ -56,29 +55,43 @@ export default function HomePage() {
       alert('Please sign in to like.');
       return;
     }
-    if (likedIds.has(postId)) {
+
+    const post = posts.find(p => p.id === postId);
+    if (!post) return;
+
+    const alreadyLiked = likedIds.has(postId);
+    let updatedLikes = post.likes;
+
+    if (alreadyLiked) {
       await supabase
         .from('likes')
         .delete()
         .eq('moment_id', postId)
         .eq('user_id', userId);
-      await supabase
-        .from('moments')
-        .update({ likes: (posts.find(p => p.id === postId)!.likes || 1) - 1 })
-        .eq('id', postId);
-      likedIds.delete(postId);
+
+      updatedLikes = Math.max(0, post.likes - 1);
     } else {
       await supabase
         .from('likes')
         .insert([{ user_id: userId, moment_id: postId }]);
-      await supabase
-        .from('moments')
-        .update({ likes: (posts.find(p => p.id === postId)!.likes || 0) + 1 })
-        .eq('id', postId);
-      likedIds.add(postId);
+
+      updatedLikes = post.likes + 1;
     }
-    setLikedIds(new Set(likedIds));
-    fetchPosts();
+
+    await supabase
+      .from('moments')
+      .update({ likes: updatedLikes })
+      .eq('id', postId);
+
+    setPosts(prev =>
+      prev.map(p =>
+        p.id === postId ? { ...p, likes: updatedLikes } : p
+      )
+    );
+
+    const newLikedIds = new Set(likedIds);
+    alreadyLiked ? newLikedIds.delete(postId) : newLikedIds.add(postId);
+    setLikedIds(newLikedIds);
   }
 
   async function handleDelete(id: string, ownerId: string) {
