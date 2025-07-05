@@ -29,7 +29,12 @@ export default function HomePage() {
 
   useEffect(() => {
     fetchPosts();
-    if (userId) fetchMyLikes();
+  }, []);
+
+  useEffect(() => {
+    if (userId) {
+      fetchMyLikes();
+    }
   }, [userId]);
 
   async function fetchPosts() {
@@ -59,39 +64,34 @@ export default function HomePage() {
     const post = posts.find(p => p.id === postId);
     if (!post) return;
 
-    const alreadyLiked = likedIds.has(postId);
-    let updatedLikes = post.likes;
-
-    if (alreadyLiked) {
+    if (likedIds.has(postId)) {
       await supabase
         .from('likes')
         .delete()
         .eq('moment_id', postId)
         .eq('user_id', userId);
 
-      updatedLikes = Math.max(0, post.likes - 1);
+      await supabase
+        .from('moments')
+        .update({ likes: post.likes - 1 })
+        .eq('id', postId);
+
+      likedIds.delete(postId);
     } else {
       await supabase
         .from('likes')
         .insert([{ user_id: userId, moment_id: postId }]);
 
-      updatedLikes = post.likes + 1;
+      await supabase
+        .from('moments')
+        .update({ likes: post.likes + 1 })
+        .eq('id', postId);
+
+      likedIds.add(postId);
     }
 
-    await supabase
-      .from('moments')
-      .update({ likes: updatedLikes })
-      .eq('id', postId);
-
-    setPosts(prev =>
-      prev.map(p =>
-        p.id === postId ? { ...p, likes: updatedLikes } : p
-      )
-    );
-
-    const newLikedIds = new Set(likedIds);
-    alreadyLiked ? newLikedIds.delete(postId) : newLikedIds.add(postId);
-    setLikedIds(newLikedIds);
+    setLikedIds(new Set(likedIds));
+    fetchPosts();
   }
 
   async function handleDelete(id: string, ownerId: string) {
@@ -109,9 +109,11 @@ export default function HomePage() {
       return;
     }
     if (!newPost.trim()) return;
+
     const { error } = await supabase
       .from('moments')
       .insert([{ text: newPost.trim(), likes: 0, user_id: userId }]);
+
     if (error) console.error('Error adding post:', error);
     else {
       setNewPost('');
@@ -214,9 +216,7 @@ export default function HomePage() {
                 </ReactMarkdown>
               </div>
               <div className="flex justify-between items-center mt-2 text-sm text-gray-500">
-                <span>
-                  {moment(post.created_at).format('DD/MM/YYYY, HH:mm:ss')}
-                </span>
+                <span>{moment(post.created_at).format('DD/MM/YYYY, HH:mm:ss')}</span>
                 <div className="flex items-center gap-4">
                   <Button
                     variant="ghost"
