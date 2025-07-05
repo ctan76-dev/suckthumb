@@ -56,38 +56,33 @@ export default function HomePage() {
       return;
     }
 
-    const post = posts.find(p => p.id === postId);
-    if (!post) return;
+    const { data: existingLike, error: likeError } = await supabase
+      .from('likes')
+      .select('*')
+      .eq('user_id', userId)
+      .eq('moment_id', postId)
+      .single();
 
-    try {
-      if (likedIds.has(postId)) {
-        await supabase
-          .from('likes')
-          .delete()
-          .eq('moment_id', postId)
-          .eq('user_id', userId);
-
-        await supabase
-          .from('moments')
-          .update({ likes: post.likes - 1 })
-          .eq('id', postId);
-      } else {
-        await supabase
-          .from('likes')
-          .insert([{ user_id: userId, moment_id: postId }]);
-
-        await supabase
-          .from('moments')
-          .update({ likes: post.likes + 1 })
-          .eq('id', postId);
-      }
-
-      // Refresh UI
-      await fetchPosts();
-      await fetchMyLikes();
-    } catch (err) {
-      console.error('Error toggling like:', err);
+    if (likeError && likeError.code !== 'PGRST116') {
+      console.error('Error checking like:', likeError);
+      return;
     }
+
+    if (existingLike) {
+      await supabase
+        .from('likes')
+        .delete()
+        .eq('id', existingLike.id);
+      await supabase.rpc('decrement_like', { moment_id_input: postId });
+    } else {
+      await supabase
+        .from('likes')
+        .insert([{ user_id: userId, moment_id: postId }]);
+      await supabase.rpc('increment_like', { moment_id_input: postId });
+    }
+
+    fetchPosts();
+    fetchMyLikes();
   }
 
   async function handleDelete(id: string, ownerId: string) {
@@ -136,7 +131,10 @@ export default function HomePage() {
                 <UserIcon className="h-8 w-8 text-gray-500" />
               )}
               <button
-                onClick={() => supabase.auth.signOut()}
+                onClick={async () => {
+                  await supabase.auth.signOut();
+                  window.location.href = '/';
+                }}
                 className="ml-3 text-red-600 hover:underline text-sm"
               >
                 Sign Out
