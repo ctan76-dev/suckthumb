@@ -28,7 +28,7 @@ export default function HomePage() {
   const [newPost, setNewPost] = useState('');
   const [likedIds, setLikedIds] = useState<Set<string>>(new Set());
 
-  // 1) Load which moments this user has liked
+  // Load which moments this user has liked
   async function fetchMyLikes() {
     if (!userId) {
       setLikedIds(new Set());
@@ -46,7 +46,7 @@ export default function HomePage() {
     }
   }
 
-  // 2) Load all moments
+  // Load all moments
   async function fetchPosts() {
     const { data, error } = await supabase
       .from('moments')
@@ -60,7 +60,7 @@ export default function HomePage() {
     }
   }
 
-  // 3) Toggle like/unlike for a given moment
+  // Toggle like/unlike for a given moment
   async function toggleLike(postId: string) {
     if (!userId) {
       alert('Please sign in to like.');
@@ -92,16 +92,16 @@ export default function HomePage() {
     await fetchPosts();
   }
 
-  // delete your own post
+  // Delete your own post
   async function handleDelete(id: string, ownerId: string) {
     if (ownerId !== userId) return;
     if (!confirm('Delete this post?')) return;
     const { error } = await supabase.from('moments').delete().eq('id', id);
-    if (error) console.error('Error deleting post:', error);
+    if (error) console.error('Error deleting post:', error.message);
     else setPosts(p => p.filter(x => x.id !== id));
   }
 
-  // submit a new post
+  // Submit a new post
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     if (!userId) {
@@ -120,7 +120,7 @@ export default function HomePage() {
     }
   }
 
-  // initial load & refetch on user change
+  // Initial load & refetch on user change
   useEffect(() => {
     fetchPosts();
     fetchMyLikes();
@@ -223,17 +223,20 @@ export default function HomePage() {
               <div className="flex justify-between items-center mt-2 text-sm text-gray-500">
                 <span>{moment(post.created_at).format('DD/MM/YYYY, HH:mm:ss')}</span>
                 <div className="flex items-center gap-4">
-                  <button
+                  {/* smaller, consistent heart button */}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className={likedIds.has(post.id) ? 'text-red-500' : 'text-gray-500'}
                     onClick={() => toggleLike(post.id)}
-                    className={`text-xl ${
-                      likedIds.has(post.id) ? 'text-red-500' : 'text-gray-500'
-                    }`}
                   >
                     {likedIds.has(post.id) ? '💔' : '❤️'} {post.likes}
-                  </button>
+                  </Button>
+
                   {post.user_id === userId && (
                     <Button
                       variant="ghost"
+                      size="sm"
                       onClick={() => handleDelete(post.id, post.user_id)}
                     >
                       <Trash className="h-4 w-4 text-gray-500 hover:text-red-500" />
