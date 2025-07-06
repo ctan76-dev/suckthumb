@@ -51,39 +51,51 @@ export default function HomePage() {
   }
 
   async function toggleLike(postId: string) {
-    if (!userId) {
-      alert('Please sign in to like.');
-      return;
-    }
-
-    const { data: existingLike, error: likeError } = await supabase
-      .from('likes')
-      .select('*')
-      .eq('user_id', userId)
-      .eq('moment_id', postId)
-      .single();
-
-    if (likeError && likeError.code !== 'PGRST116') {
-      console.error('Error checking like:', likeError);
-      return;
-    }
-
-    if (existingLike) {
-      await supabase
-        .from('likes')
-        .delete()
-        .eq('id', existingLike.id);
-      await supabase.rpc('decrement_like', { moment_id_input: postId });
-    } else {
-      await supabase
-        .from('likes')
-        .insert([{ user_id: userId, moment_id: postId }]);
-      await supabase.rpc('increment_like', { moment_id_input: postId });
-    }
-
-    fetchPosts();
-    fetchMyLikes();
+  if (!userId) {
+    alert('Please sign in to like.');
+    return;
   }
+
+  // 1) Check if you already liked this post
+  const { data: existingLike, error: likeError } = await supabase
+    .from('likes')
+    .select('*')
+    .eq('user_id', userId)
+    .eq('moment_id', postId)
+    .single();
+
+  console.log('toggleLike — existingLike, likeError:', existingLike, likeError);
+
+  // If there’s a real error (besides “no rows”), stop here
+  if (likeError && (likeError as any).code !== 'PGRST116') {
+    console.error('Error checking like status:', likeError);
+    return;
+  }
+
+  let rpcResult;
+
+  if (existingLike) {
+    // 2a) You had liked it; now remove the like
+    rpcResult = await supabase
+      .from('likes')
+      .delete()
+      .eq('id', existingLike.id)
+      .then(() => supabase.rpc('decrement_like', { moment_id_input: postId }));
+  } else {
+    // 2b) You hadn’t liked it; now add a like
+    rpcResult = await supabase
+      .from('likes')
+      .insert([{ user_id: userId, moment_id: postId }])
+      .then(() => supabase.rpc('increment_like', { moment_id_input: postId }));
+  }
+
+  console.log('toggleLike — rpcResult:', rpcResult);
+
+  // 3) Finally, reload data from the database
+  await fetchPosts();
+  await fetchMyLikes();
+}
+
 
   async function handleDelete(id: string, ownerId: string) {
     if (ownerId !== userId) return;
