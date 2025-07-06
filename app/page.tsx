@@ -1,3 +1,4 @@
+// File: app/page.tsx
 'use client';
 
 import { useState, useEffect, FormEvent } from 'react';
@@ -8,7 +9,7 @@ import remarkGfm from 'remark-gfm';
 import moment from 'moment';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Trash, Heart as HeartIcon, User as UserIcon } from 'lucide-react';
+import { Trash, User as UserIcon } from 'lucide-react';
 
 type Post = {
   id: string;
@@ -27,10 +28,10 @@ export default function HomePage() {
   const [newPost, setNewPost] = useState('');
   const [likedIds, setLikedIds] = useState<Set<string>>(new Set());
 
-  // Load posts on mount
+  // load all posts
   useEffect(() => { fetchPosts(); }, []);
 
-  // Once signed in, load which posts this user has liked
+  // once user logs in, load their likes
   useEffect(() => {
     if (userId) fetchMyLikes();
   }, [userId]);
@@ -61,40 +62,35 @@ export default function HomePage() {
     const isLiked = likedIds.has(postId);
 
     if (isLiked) {
-      // UNLIKE
-      const { error: delErr } = await supabase
+      // remove like
+      await supabase
         .from('post_likes')
         .delete()
         .eq('post_id', postId)
         .eq('user_id', userId);
-      if (delErr) console.error('Error unliking:', delErr);
 
-      else {
-        // decrement the count
-        const current = posts.find(p => p.id === postId)?.likes || 1;
-        await supabase
-          .from('moments')
-          .update({ likes: current - 1 })
-          .eq('id', postId);
-      }
+      // decrement counter
+      const current = posts.find(p => p.id === postId)?.likes || 1;
+      await supabase
+        .from('moments')
+        .update({ likes: current - 1 })
+        .eq('id', postId);
+
     } else {
-      // LIKE
-      const { error: insErr } = await supabase
+      // add like
+      await supabase
         .from('post_likes')
         .insert({ post_id: postId, user_id: userId });
-      if (insErr) console.error('Error liking:', insErr);
 
-      else {
-        // increment the count
-        const current = posts.find(p => p.id === postId)?.likes || 0;
-        await supabase
-          .from('moments')
-          .update({ likes: current + 1 })
-          .eq('id', postId);
-      }
+      // increment counter
+      const current = posts.find(p => p.id === postId)?.likes || 0;
+      await supabase
+        .from('moments')
+        .update({ likes: current + 1 })
+        .eq('id', postId);
     }
 
-    // Refresh both your liked set and the feed counts
+    // refresh both your like-set and the feed
     await fetchMyLikes();
     await fetchPosts();
   }
@@ -102,12 +98,11 @@ export default function HomePage() {
   async function handleDelete(postId: string, ownerId: string) {
     if (ownerId !== userId) return;
     if (!confirm('Delete this post?')) return;
-    const { error } = await supabase
+    await supabase
       .from('moments')
       .delete()
       .eq('id', postId);
-    if (error) console.error('Error deleting:', error);
-    else setPosts(ps => ps.filter(p => p.id !== postId));
+    setPosts(ps => ps.filter(p => p.id !== postId));
   }
 
   async function handleSubmit(e: FormEvent) {
@@ -118,14 +113,13 @@ export default function HomePage() {
     }
     const text = newPost.trim();
     if (!text) return;
-    const { error } = await supabase
-      .from('moments')
-      .insert({ text, likes: 0, user_id: userId });
-    if (error) console.error('Error adding post:', error);
-    else {
-      setNewPost('');
-      fetchPosts();
-    }
+    await supabase.from('moments').insert({
+      text,
+      likes: 0,
+      user_id: userId,
+    });
+    setNewPost('');
+    fetchPosts();
   }
 
   return (
@@ -157,7 +151,10 @@ export default function HomePage() {
             </>
           ) : (
             <>
-              <Link href="/signin" className="text-[#1414A0] hover:underline text-sm">
+              <Link
+                href="/signin"
+                className="text-[#1414A0] hover:underline text-sm"
+              >
                 Sign In
               </Link>
               <Link href="/signup">
@@ -201,7 +198,10 @@ export default function HomePage() {
         {/* POSTS FEED */}
         <div className="space-y-4">
           {posts.map(post => (
-            <div key={post.id} className="bg-white p-4 rounded-xl shadow border">
+            <div
+              key={post.id}
+              className="bg-white p-4 rounded-xl shadow border"
+            >
               {/* content */}
               <ReactMarkdown
                 remarkPlugins={[remarkGfm]}
@@ -223,21 +223,17 @@ export default function HomePage() {
 
               {/* footer */}
               <div className="flex justify-between items-center mt-4 text-sm text-gray-500">
-                <span>{moment(post.created_at).format('DD/MM/YYYY, HH:mm')}</span>
+                <span>
+                  {moment(post.created_at).format('DD/MM/YYYY, HH:mm')}
+                </span>
                 <div className="flex items-center gap-2">
                   {/* like/unlike */}
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="flex items-center gap-1"
                     onClick={() => toggleLike(post.id)}
                   >
-                    <HeartIcon
-                      className={`h-5 w-5 ${
-                        likedIds.has(post.id) ? 'text-red-500' : 'text-gray-500'
-                      }`}
-                    />
-                    <span>{post.likes}</span>
+                    {likedIds.has(post.id) ? '💔' : '❤️'} {post.likes}
                   </Button>
 
                   {/* delete */}
@@ -247,7 +243,7 @@ export default function HomePage() {
                       size="sm"
                       onClick={() => handleDelete(post.id, post.user_id)}
                     >
-                      <Trash className="h-5 w-5 text-gray-500 hover:text-red-500" />
+                      <Trash className="h-4 w-4 text-gray-500 hover:text-red-500" />
                     </Button>
                   )}
                 </div>
