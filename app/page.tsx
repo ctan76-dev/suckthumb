@@ -8,7 +8,7 @@ import remarkGfm from 'remark-gfm';
 import moment from 'moment';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Trash, User as UserIcon } from 'lucide-react';
+import { Trash, Heart as HeartIcon, User as UserIcon } from 'lucide-react';
 
 type Post = {
   id: string;
@@ -21,22 +21,20 @@ type Post = {
 export default function HomePage() {
   const supabase = useSupabaseClient();
   const session = useSession();
-  const userId = session?.user.id;
+  const userId = session?.user.id || '';
 
   const [posts, setPosts] = useState<Post[]>([]);
   const [newPost, setNewPost] = useState('');
   const [likedIds, setLikedIds] = useState<Set<string>>(new Set());
 
-  // Load posts + current user's likes
-  useEffect(() => {
-    fetchPosts();
-  }, []);
+  // Load posts on mount
+  useEffect(() => { fetchPosts(); }, []);
 
+  // Once signed in, load which posts this user has liked
   useEffect(() => {
     if (userId) fetchMyLikes();
   }, [userId]);
 
-  // Fetch all posts
   async function fetchPosts() {
     const { data, error } = await supabase
       .from('moments')
@@ -46,53 +44,72 @@ export default function HomePage() {
     else setPosts(data as Post[]);
   }
 
-  // Fetch which posts *this* user has liked
   async function fetchMyLikes() {
     const { data, error } = await supabase
       .from('post_likes')
       .select('post_id')
       .eq('user_id', userId);
-    if (error) console.error('Error loading likes:', error);
+    if (error) console.error('Error loading your likes:', error);
     else setLikedIds(new Set(data.map((r: any) => r.post_id)));
   }
 
-  // Toggle like / unlike via your RPCs
   async function toggleLike(postId: string) {
     if (!userId) {
       alert('Please sign in to like.');
       return;
     }
-
     const isLiked = likedIds.has(postId);
-    const rpcName = isLiked ? 'decrement_like' : 'increment_like';
 
-    const { error } = await supabase
-      .rpc(rpcName, { moment_id: postId });
+    if (isLiked) {
+      // UNLIKE
+      const { error: delErr } = await supabase
+        .from('post_likes')
+        .delete()
+        .eq('post_id', postId)
+        .eq('user_id', userId);
+      if (delErr) console.error('Error unliking:', delErr);
 
-    if (error) {
-      console.error('RPC error:', error.message);
+      else {
+        // decrement the count
+        const current = posts.find(p => p.id === postId)?.likes || 1;
+        await supabase
+          .from('moments')
+          .update({ likes: current - 1 })
+          .eq('id', postId);
+      }
+    } else {
+      // LIKE
+      const { error: insErr } = await supabase
+        .from('post_likes')
+        .insert({ post_id: postId, user_id: userId });
+      if (insErr) console.error('Error liking:', insErr);
+
+      else {
+        // increment the count
+        const current = posts.find(p => p.id === postId)?.likes || 0;
+        await supabase
+          .from('moments')
+          .update({ likes: current + 1 })
+          .eq('id', postId);
+      }
     }
 
-    // Refresh both your like-list and the posts count
+    // Refresh both your liked set and the feed counts
     await fetchMyLikes();
     await fetchPosts();
   }
 
-  // Delete your own post
   async function handleDelete(postId: string, ownerId: string) {
     if (ownerId !== userId) return;
     if (!confirm('Delete this post?')) return;
-
     const { error } = await supabase
       .from('moments')
       .delete()
       .eq('id', postId);
-
-    if (error) console.error('Error deleting post:', error);
+    if (error) console.error('Error deleting:', error);
     else setPosts(ps => ps.filter(p => p.id !== postId));
   }
 
-  // Submit a new post
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     if (!userId) {
@@ -101,14 +118,11 @@ export default function HomePage() {
     }
     const text = newPost.trim();
     if (!text) return;
-
     const { error } = await supabase
       .from('moments')
       .insert({ text, likes: 0, user_id: userId });
-
-    if (error) {
-      console.error('Error adding post:', error);
-    } else {
+    if (error) console.error('Error adding post:', error);
+    else {
       setNewPost('');
       fetchPosts();
     }
@@ -132,7 +146,7 @@ export default function HomePage() {
                   className="h-8 w-8 rounded-full object-cover"
                 />
               ) : (
-                <UserIcon className="h-8 w-8 text-gray-500" />
+                <UserIcon className="h-6 w-6 text-gray-500" />
               )}
               <button
                 onClick={() => supabase.auth.signOut()}
@@ -166,7 +180,7 @@ export default function HomePage() {
           </p>
         </div>
 
-        {/* NEW POST */}
+        {/* NEW POST FORM */}
         <form onSubmit={handleSubmit} className="space-y-4">
           <Textarea
             rows={5}
@@ -188,6 +202,7 @@ export default function HomePage() {
         <div className="space-y-4">
           {posts.map(post => (
             <div key={post.id} className="bg-white p-4 rounded-xl shadow border">
+              {/* content */}
               <ReactMarkdown
                 remarkPlugins={[remarkGfm]}
                 components={{
@@ -206,22 +221,34 @@ export default function HomePage() {
                 {post.text}
               </ReactMarkdown>
 
+              {/* footer */}
               <div className="flex justify-between items-center mt-4 text-sm text-gray-500">
                 <span>{moment(post.created_at).format('DD/MM/YYYY, HH:mm')}</span>
-                <div className="flex items-center gap-4">
-                  <button
+                <div className="flex items-center gap-2">
+                  {/* like/unlike */}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="flex items-center gap-1"
                     onClick={() => toggleLike(post.id)}
-                    className={`text-xl ${
-                      likedIds.has(post.id) ? 'text-red-500' : 'text-gray-500'
-                    }`}
                   >
-                    {likedIds.has(post.id) ? '💔' : '❤️'} {post.likes}
-                  </button>
+                    <HeartIcon
+                      className={`h-5 w-5 ${
+                        likedIds.has(post.id) ? 'text-red-500' : 'text-gray-500'
+                      }`}
+                    />
+                    <span>{post.likes}</span>
+                  </Button>
 
+                  {/* delete */}
                   {post.user_id === userId && (
-                    <button onClick={() => handleDelete(post.id, post.user_id)}>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleDelete(post.id, post.user_id)}
+                    >
                       <Trash className="h-5 w-5 text-gray-500 hover:text-red-500" />
-                    </button>
+                    </Button>
                   )}
                 </div>
               </div>
