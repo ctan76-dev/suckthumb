@@ -56,45 +56,22 @@ export default function HomePage() {
     return;
   }
 
-  // 1) Check if you already liked this post
-  const { data: existingLike, error: likeError } = await supabase
-    .from('likes')
-    .select('*')
-    .eq('user_id', userId)
-    .eq('moment_id', postId)
-    .single();
+  const hasLiked = likedIds.has(postId);
+  const fnName   = hasLiked ? 'decrement_like' : 'increment_like';
 
-  console.log('toggleLike — existingLike, likeError:', existingLike, likeError);
+  // Call your Postgres RPC
+  const { error } = await supabase
+    .rpc(fnName, { moment_id: postId });
 
-  // If there’s a real error (besides “no rows”), stop here
-  if (likeError && (likeError as any).code !== 'PGRST116') {
-    console.error('Error checking like status:', likeError);
-    return;
+  if (error) {
+    console.error('RPC error:', error.message);
   }
 
-  let rpcResult;
-
-  if (existingLike) {
-    // 2a) You had liked it; now remove the like
-    rpcResult = await supabase
-      .from('likes')
-      .delete()
-      .eq('id', existingLike.id)
-      .then(() => supabase.rpc('decrement_like', { moment_id_input: postId }));
-  } else {
-    // 2b) You hadn’t liked it; now add a like
-    rpcResult = await supabase
-      .from('likes')
-      .insert([{ user_id: userId, moment_id: postId }])
-      .then(() => supabase.rpc('increment_like', { moment_id_input: postId }));
-  }
-
-  console.log('toggleLike — rpcResult:', rpcResult);
-
-  // 3) Finally, reload data from the database
-  await fetchPosts();
+  // Reload both your own like-state and the posts list:
   await fetchMyLikes();
+  await fetchPosts();
 }
+
 
 
   async function handleDelete(id: string, ownerId: string) {
