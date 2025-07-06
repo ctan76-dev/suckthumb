@@ -1,3 +1,4 @@
+// File: app/signin/page.tsx
 'use client';
 
 import React, { FormEvent, useState, useEffect } from 'react';
@@ -40,8 +41,25 @@ export default function SignInPage() {
     if (error) setErrorMsg(error.message);
   };
 
+  // **Forgot password**
+  const handleForgotPassword = async () => {
+    setErrorMsg(null);
+
+    if (!email) {
+      return setErrorMsg('Please enter your email above.');
+    }
+
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: 'https://www.suckthumb.com/update-password',
+    });
+    if (error) {
+      setErrorMsg(error.message);
+    } else {
+      setErrorMsg('Check your inbox for a reset link!');
+    }
+  };
+
   return (
-    // ← make this at least full-screen tall so you can scroll
     <main className="min-h-screen max-w-md mx-auto p-6 space-y-6">
       <h1 className="text-2xl font-bold text-center">Sign In</h1>
 
@@ -85,6 +103,17 @@ export default function SignInPage() {
           Sign In with Email
         </Button>
       </form>
+
+      {/* Forgot password */}
+      <p className="text-center text-sm text-gray-500">
+        <button
+          type="button"
+          className="text-blue-600 hover:underline"
+          onClick={handleForgotPassword}
+        >
+          Forgot password?
+        </button>
+      </p>
 
       {/* Sign up link */}
       <p className="text-center text-sm text-gray-600">
