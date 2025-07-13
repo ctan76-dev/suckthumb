@@ -27,17 +27,6 @@ export default function HomePage() {
   const [posts, setPosts] = useState<Post[]>([]);
   const [newPost, setNewPost] = useState('');
   const [likedIds, setLikedIds] = useState<Set<string>>(new Set());
-  const [error, setError] = useState<string | null>(null);
-  const [message, setMessage] = useState<string | null>(null);
-
-  // Log environment variables on mount
-  useEffect(() => {
-    console.log('🔑 SUPABASE_URL:', process.env.NEXT_PUBLIC_SUPABASE_URL);
-    console.log(
-      '🔑 ANON_KEY (first 8 chars):',
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.slice(0, 8) + '…'
-    );
-  }, []);
 
   // Fetch which posts the user has liked
   async function fetchMyLikes() {
@@ -63,9 +52,6 @@ export default function HomePage() {
       .from('moments')
       .select('*')
       .order('created_at', { ascending: false });
-
-    // Log the raw response
-    console.log('🐸 fetchPosts →', { data, error });
 
     if (error) {
       console.error('Error loading posts:', error.message);
