@@ -1,4 +1,3 @@
-// File: app/page.tsx
 'use client';
 
 import Link from 'next/link';
@@ -11,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Trash, User as UserIcon } from 'lucide-react';
 
+// Define your Post type
 type Post = {
   id: string;
   text: string;
@@ -27,8 +27,19 @@ export default function HomePage() {
   const [posts, setPosts] = useState<Post[]>([]);
   const [newPost, setNewPost] = useState('');
   const [likedIds, setLikedIds] = useState<Set<string>>(new Set());
+  const [error, setError] = useState<string | null>(null);
+  const [message, setMessage] = useState<string | null>(null);
 
-  // Load which moments this user has liked
+  // Log environment variables on mount
+  useEffect(() => {
+    console.log('🔑 SUPABASE_URL:', process.env.NEXT_PUBLIC_SUPABASE_URL);
+    console.log(
+      '🔑 ANON_KEY (first 8 chars):',
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.slice(0, 8) + '…'
+    );
+  }, []);
+
+  // Fetch which posts the user has liked
   async function fetchMyLikes() {
     if (!userId) {
       setLikedIds(new Set());
@@ -46,24 +57,24 @@ export default function HomePage() {
     }
   }
 
-  // Load all moments
+  // Fetch all posts
   async function fetchPosts() {
-  const { data, error } = await supabase
-    .from('moments')
-    .select('*')
-    .order('created_at', { ascending: false });
+    const { data, error } = await supabase
+      .from('moments')
+      .select('*')
+      .order('created_at', { ascending: false });
 
-  // ← Add this line:
-  console.log('🐸 fetchPosts →', { data, error });
+    // Log the raw response
+    console.log('🐸 fetchPosts →', { data, error });
 
-  if (error) {
-    console.error('Error loading posts:', error.message);
-  } else {
-    setPosts(data as Post[]);
+    if (error) {
+      console.error('Error loading posts:', error.message);
+    } else {
+      setPosts(data as Post[]);
+    }
   }
-}
 
-  // Toggle like/unlike for a given moment
+  // Toggle like/unlike for a post
   async function toggleLike(postId: string) {
     if (!userId) {
       alert('Please sign in to like.');
@@ -73,29 +84,22 @@ export default function HomePage() {
     const isLiked = likedIds.has(postId);
 
     if (isLiked) {
-      // remove like
-      const { error } = await supabase
+      await supabase
         .from('likes')
         .delete()
         .eq('moment_id', postId)
         .eq('user_id', userId);
-
-      if (error) console.error('Error removing like:', error.message);
     } else {
-      // add like
-      const { error } = await supabase
+      await supabase
         .from('likes')
         .insert([{ moment_id: postId, user_id: userId }]);
-
-      if (error) console.error('Error adding like:', error.message);
     }
 
-    // refresh both lists
     await fetchMyLikes();
     await fetchPosts();
   }
 
-  // Delete your own post
+  // Delete a post
   async function handleDelete(id: string, ownerId: string) {
     if (ownerId !== userId) return;
     if (!confirm('Delete this post?')) return;
@@ -115,8 +119,10 @@ export default function HomePage() {
     const { error } = await supabase
       .from('moments')
       .insert([{ text: newPost.trim(), likes: 0, user_id: userId }]);
-    if (error) console.error('Error adding post:', error.message);
-    else {
+
+    if (error) {
+      console.error('Error adding post:', error.message);
+    } else {
       setNewPost('');
       await fetchPosts();
       await fetchMyLikes();
@@ -131,7 +137,7 @@ export default function HomePage() {
 
   return (
     <>
-      {/* BANNER */}
+      {/* Navigation */}
       <nav className="w-full flex items-center justify-between bg-white border-b px-6 py-4 shadow">
         <div className="flex items-center space-x-3">
           <img src="/logo.png" alt="SuckThumb" className="h-8 w-8" />
@@ -169,9 +175,9 @@ export default function HomePage() {
         </div>
       </nav>
 
-      {/* MAIN CONTENT */}
+      {/* Main Content */}
       <main className="max-w-xl mx-auto p-4 space-y-6">
-        {/* HERO */}
+        {/* Hero */}
         <div className="bg-blue-800 p-6 rounded-xl shadow text-center border border-blue-800">
           <p className="text-3xl font-bold text-white">
             Got rejected, missed chance, kena scolded?
@@ -181,7 +187,7 @@ export default function HomePage() {
           </p>
         </div>
 
-        {/* NEW POST FORM */}
+        {/* New Post Form */}
         <form onSubmit={handleSubmit} className="space-y-4">
           <Textarea
             rows={6}
@@ -200,7 +206,7 @@ export default function HomePage() {
           </Button>
         </form>
 
-        {/* POSTS FEED */}
+        {/* Posts Feed */}
         <div className="space-y-4">
           {posts.map(post => (
             <div key={post.id} className="bg-white p-4 rounded-xl shadow border">
@@ -226,7 +232,6 @@ export default function HomePage() {
               <div className="flex justify-between items-center mt-2 text-sm text-gray-500">
                 <span>{moment(post.created_at).format('DD/MM/YYYY, HH:mm:ss')}</span>
                 <div className="flex items-center gap-4">
-                  {/* smaller, consistent heart button */}
                   <Button
                     variant="ghost"
                     size="sm"
