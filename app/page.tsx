@@ -48,17 +48,20 @@ export default function HomePage() {
 
   // Load all moments
   async function fetchPosts() {
-    const { data, error } = await supabase
-      .from('moments')
-      .select('*')
-      .order('created_at', { ascending: false });
+  const { data, error } = await supabase
+    .from('moments')
+    .select('*')
+    .order('created_at', { ascending: false });
 
-    if (error) {
-      console.error('Error loading posts:', error.message);
-    } else {
-      setPosts(data as Post[]);
-    }
+  // ← Add this line:
+  console.log('🐸 fetchPosts →', { data, error });
+
+  if (error) {
+    console.error('Error loading posts:', error.message);
+  } else {
+    setPosts(data as Post[]);
   }
+}
 
   // Toggle like/unlike for a given moment
   async function toggleLike(postId: string) {
