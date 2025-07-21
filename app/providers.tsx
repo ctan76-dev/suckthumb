@@ -1,15 +1,17 @@
 'use client';
 
-import { useState, ReactNode } from 'react';
-import { createBrowserSupabaseClient } from '@supabase/auth-helpers-nextjs';
+import { useMemo } from 'react';
+import { createPagesBrowserClient } from '@supabase/auth-helpers-nextjs';
 import { SessionContextProvider } from '@supabase/auth-helpers-react';
 
-export function Providers({ children }: { children: ReactNode }) {
-  const [supabaseClient] = useState(() =>
-    createBrowserSupabaseClient({
-      supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      supabaseKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    })
+export function Providers({ children }: { children: React.ReactNode }) {
+  const supabaseClient = useMemo(
+    () =>
+      createPagesBrowserClient({
+        supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        supabaseKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      }),
+    []
   );
 
   return (
@@ -17,4 +19,4 @@ export function Providers({ children }: { children: ReactNode }) {
       {children}
     </SessionContextProvider>
   );
-}
+} 

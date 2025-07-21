@@ -1,6 +1,6 @@
 // File: app/layout.tsx
 import './globals.css'
-import { Providers } from '../lib/providers'
+import { Providers } from './providers'
 
 export const metadata = {
   title: 'SuckThumb',
@@ -15,7 +15,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head />
-      <body>                   {/* ← no overflow-auto, no overflow-hidden */}
+      <body>
         <Providers>{children}</Providers>
       </body>
     </html>
