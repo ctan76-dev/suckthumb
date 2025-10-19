@@ -538,7 +538,7 @@ export default function HomePage() {
         aria-hidden
       />
 
-      <header className="sticky top-0 z-40 px-4 pt-4">
+      <header className="sticky top-0 z-40 px-3 pt-4 sm:px-4">
         <div className="mx-auto flex w-full max-w-6xl flex-col gap-3 rounded-2xl glass-surface px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:rounded-full sm:px-5">
           <div className="flex items-center gap-3 sm:justify-start">
             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/15 text-base font-semibold text-primary ring-gradient sm:h-11 sm:w-11">
@@ -603,7 +603,7 @@ export default function HomePage() {
         </div>
       </header>
 
-      <main className="relative z-10 mx-auto max-w-6xl px-4 pb-16 pt-4 sm:pt-6 lg:px-8">
+      <main className="relative z-10 mx-auto max-w-6xl px-3 pb-16 pt-4 sm:px-4 sm:pt-6 lg:px-8">
         <div className="grid gap-8 lg:grid-cols-[minmax(0,2.3fr)_minmax(260px,1fr)]">
           <section className="space-y-6">
             <div className="glass-surface overflow-hidden rounded-3xl border border-white/10 px-6 py-8 text-center shadow-2xl sm:px-8 sm:py-10 sm:text-left">
