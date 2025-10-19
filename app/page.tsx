@@ -541,14 +541,14 @@ export default function HomePage() {
       <header className="sticky top-0 z-40 px-3 pt-4 sm:px-4">
         <div className="mx-auto flex w-full max-w-6xl flex-col gap-3 rounded-2xl glass-surface px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:rounded-full sm:px-5">
           <div className="flex items-center gap-3 sm:justify-start">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/15 text-base font-semibold text-primary ring-gradient sm:h-11 sm:w-11">
-              ST
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/15 text-base font-semibold text-primary ring-gradient sm:h-12 sm:w-12">
+              <Heart className="h-5 w-5" />
             </div>
             <div className="text-center sm:text-left">
               <p className="text-[0.65rem] uppercase tracking-[0.35em] text-primary/60 sm:text-xs">
                 Your daily vent space
               </p>
-              <span className="text-lg font-semibold tracking-tight text-foreground sm:text-xl">
+              <span className="text-xl font-semibold tracking-tight text-foreground sm:text-2xl">
                 SuckThumb
               </span>
             </div>
@@ -660,7 +660,7 @@ export default function HomePage() {
                     </div>
 
                     <div className="space-y-4 rounded-2xl border border-dashed border-primary/20 bg-primary/5 p-4">
-                      <div className="flex flex-wrap items-center gap-2">
+                  <div className="flex flex-wrap items-center gap-2 sm:gap-2">
                         <Button
                           type="button"
                           variant="outline"
@@ -736,7 +736,7 @@ export default function HomePage() {
                       )}
 
                       {(mediaFiles.length > 0 || linkUrl) && (
-                        <div className="space-y-2 rounded-xl bg-white/70 p-3 text-sm text-muted-foreground shadow-inner">
+                        <div className="space-y-2 rounded-xl bg-white/70 px-4 pb-3 pt-2 text-sm text-muted-foreground shadow-inner">
                           {mediaFiles.map((media, index) => (
                             <div
                               key={index}
@@ -799,7 +799,7 @@ export default function HomePage() {
                 </div>
               </form>
             ) : (
-              <div className="glass-surface rounded-3xl border border-white/15 p-8 text-center shadow-xl">
+                <div className="glass-surface rounded-3xl border border-white/15 px-6 py-8 text-center shadow-xl">
                 <p className="text-lg font-medium text-foreground">Want to vent or celebrate?</p>
                 <p className="mt-2 text-sm text-muted-foreground">
                   Create a free account to start posting moments and reacting with the community.
@@ -815,7 +815,7 @@ export default function HomePage() {
 
             <div className="space-y-5">
               {posts.length === 0 && (
-                <div className="glass-surface rounded-3xl border border-dashed border-primary/20 p-8 text-center text-muted-foreground">
+                <div className="glass-surface rounded-3xl border border-dashed border-primary/20 px-6 py-8 text-center text-muted-foreground">
                   No posts yet. Be the first to share a moment today.
                 </div>
               )}
@@ -826,7 +826,7 @@ export default function HomePage() {
                 const isLiked = userLikes.has(post.id);
 
                 return (
-                  <div key={post.id} className="glass-surface rounded-3xl border border-white/10 p-6 shadow-xl">
+                  <div key={post.id} className="glass-surface rounded-3xl border border-white/10 px-5 py-6 shadow-xl">
                     {editingPost === post.id ? (
                       <div className="space-y-4">
                         <Textarea
