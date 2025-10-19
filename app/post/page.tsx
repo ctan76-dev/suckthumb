@@ -5,13 +5,15 @@ import moment from 'moment';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Trash } from 'lucide-react';
-import { useSupabaseClient } from '@supabase/auth-helpers-react';
+import { useSupabaseClient, useSession } from '@supabase/auth-helpers-react';
 import type { Database } from '@/types/supabase';
 
 type MomentRow = Database['public']['Tables']['moments']['Row'];
+type MomentInsert = Database['public']['Tables']['moments']['Insert'];
 
 export default function HomePage() {
   const supabase = useSupabaseClient<Database>();
+  const session = useSession();
   const [posts, setPosts] = useState<MomentRow[]>([]);
   const [newPost, setNewPost] = useState('');
 
@@ -31,9 +33,21 @@ export default function HomePage() {
   // 2) Add a new moment
   const handleSubmit = async () => {
     if (!newPost.trim()) return;
-    const { error } = await supabase
-      .from('moments')
-      .insert([{ text: newPost.trim(), likes: 0 }]);
+    if (!session) {
+      alert('You must be signed in to post.');
+      return;
+    }
+
+    const payload: MomentInsert = {
+      text: newPost.trim(),
+      user_id: session.user.id,
+      user_email: session.user.email ?? null,
+      likes: 0,
+      media_type: null,
+      media_url: null,
+    };
+
+    const { error } = await supabase.from('moments').insert([payload]);
     if (error) console.error('Error adding post:', error);
     else {
       setNewPost('');

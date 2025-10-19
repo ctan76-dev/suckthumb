@@ -63,7 +63,7 @@ export default function HomePage() {
         return;
       }
 
-      setPosts(data ?? []);
+      setPosts((data ?? []) as Post[]);
     } catch (error) {
       console.error('Error fetching posts:', error);
     }
@@ -221,10 +221,10 @@ export default function HomePage() {
         return;
       }
 
-      const postData = {
+      const postData: Database['public']['Tables']['moments']['Insert'] = {
         text: newPost,
         user_id: session.user.id,
-        user_email: session.user.email,
+        user_email: session.user.email ?? null,
         likes: 0,
         media_url: mediaUrl,
         media_type: mediaFiles.length > 0 ? mediaFiles[0].type : (linkUrl ? 'link' : null),
@@ -319,12 +319,15 @@ export default function HomePage() {
   const handleEdit = async (postId: string) => {
     if (!editText.trim()) return;
 
+    if (!session) return;
+    const userId = session.user.id;
+
     try {
       const { error } = await supabase
         .from('moments')
         .update({ text: editText })
         .eq('id', postId)
-        .eq('user_id', session?.user.id);
+        .eq('user_id', userId);
 
       if (error) {
         console.error('Error updating post:', error);
@@ -342,6 +345,9 @@ export default function HomePage() {
   const handleDelete = async (postId: string) => {
     if (!confirm('Are you sure you want to delete this post?')) return;
 
+    if (!session) return;
+    const userId = session.user.id;
+
     try {
       await supabase.from('likes').delete().eq('moment_id', postId);
       await supabase.from('comments').delete().eq('moment_id', postId);
@@ -350,7 +356,7 @@ export default function HomePage() {
         .from('moments')
         .delete()
         .eq('id', postId)
-        .eq('user_id', session?.user.id);
+        .eq('user_id', userId);
 
       if (error) {
         console.error('Error deleting post:', error);
@@ -367,13 +373,16 @@ export default function HomePage() {
     const commentText = newComment[postId];
     if (!session || !commentText?.trim()) return;
 
+    if (!session) return;
+    const userId = session.user.id;
+
     try {
       const { error } = await supabase
         .from('comments')
         .insert([
           {
             moment_id: postId,
-            user_id: session.user.id,
+            user_id: userId,
             user_email: session.user.email || '',
             text: commentText,
           },
@@ -398,6 +407,9 @@ export default function HomePage() {
   const handleEditComment = async (commentId: string) => {
     if (!editCommentText.trim()) return;
 
+    if (!session) return;
+    const userId = session.user.id;
+
     try {
       const { error } = await supabase
         .from('comments')
@@ -406,7 +418,7 @@ export default function HomePage() {
           updated_at: new Date().toISOString(),
         })
         .eq('id', commentId)
-        .eq('user_id', session?.user.id);
+        .eq('user_id', userId);
 
       if (error) {
         console.error('Error updating comment:', error);
@@ -424,12 +436,15 @@ export default function HomePage() {
   const handleDeleteComment = async (commentId: string, postId: string) => {
     if (!confirm('Are you sure you want to delete this comment?')) return;
 
+    if (!session) return;
+    const userId = session.user.id;
+
     try {
       const { error } = await supabase
         .from('comments')
         .delete()
         .eq('id', commentId)
-        .eq('user_id', session?.user.id);
+        .eq('user_id', userId);
 
       if (error) {
         console.error('Error deleting comment:', error);
