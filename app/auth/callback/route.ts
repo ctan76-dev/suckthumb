@@ -18,7 +18,9 @@ export async function GET(request: NextRequest) {
   const refreshToken = searchParams.get('refresh_token');
   const code = searchParams.get('code');
   const email = searchParams.get('email');
-  const redirectTarget = searchParams.get('redirect') ?? '/update-password';
+  const redirectTarget =
+    searchParams.get('redirect') ??
+    (type === 'recovery' || token ? '/update-password' : '/profile');
 
   // If this is a password recovery, redirect to update-password
   if (type === 'recovery' || token || code) {
@@ -54,14 +56,6 @@ export async function GET(request: NextRequest) {
       console.log('Redirecting recovery to:', redirectUrl.toString());
     }
     return NextResponse.redirect(redirectUrl);
-  }
-
-  // For OAuth flows (like Google sign-in), redirect to auth page
-  if (code) {
-    if (process.env.NODE_ENV !== 'production') {
-      console.log('OAuth flow detected, redirecting to auth page');
-    }
-    return NextResponse.redirect(new URL('/auth', request.url));
   }
 
   // For other auth flows, redirect to auth page

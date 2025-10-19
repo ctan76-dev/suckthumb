@@ -30,7 +30,11 @@ export default function AuthPage() {
     setSuccessMsg(null);
     supabase.auth.signInWithOAuth({
       provider: "google",
-      options: { redirectTo: window.location.origin + "/profile" },
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback?redirect=${encodeURIComponent(
+          "/profile"
+        )}`,
+      },
     });
     // Do NOT set loading to false here
   };
