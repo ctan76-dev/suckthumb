@@ -44,13 +44,6 @@ export default function HomePage() {
   const userEmail = session?.user.email ?? 'Guest';
   const avatarUrl = session?.user.user_metadata?.avatar_url as string | undefined;
   const userInitial = userEmail.charAt(0).toUpperCase();
-  const curatedPrompts = [
-    'Share a tiny win from today.',
-    'What made you smile despite the chaos?',
-    'Confess an “oops” moment you can laugh about now.',
-    'Who surprised you with kindness?',
-  ];
-
   const fetchPosts = useCallback(async () => {
     try {
       const { data, error } = await supabase
@@ -1051,7 +1044,7 @@ export default function HomePage() {
 
           <aside className="space-y-6">
             {session && (
-              <div className="glass-surface rounded-3xl border border-white/15 p-6 shadow-xl">
+              <div className="glass-surface rounded-3xl border border-white/15 p-6 shadow-xl space-y-4">
                 <div className="flex items-center gap-4">
                   <div className="ring-gradient flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-lg font-semibold text-primary">
                     {avatarUrl ? (
@@ -1072,27 +1065,36 @@ export default function HomePage() {
                     <p className="text-xs text-muted-foreground">Signed in • ready to share</p>
                   </div>
                 </div>
-                <div className="mt-4 space-y-3 text-sm text-muted-foreground">
-                  <p>Need a spark? Try one of these prompts:</p>
-                  <ul className="space-y-2">
-                    {curatedPrompts.map(prompt => (
-                      <li
-                        key={prompt}
-                        className="rounded-xl border border-dashed border-primary/20 bg-primary/5 px-3 py-2 text-primary/80"
-                      >
-                        {prompt}
-                      </li>
-                    ))}
-                  </ul>
+                <div className="space-y-3 text-sm text-muted-foreground">
+                  <h3 className="text-base font-semibold text-foreground">Need a spark? Hear me out!</h3>
+                  <p>
+                    Everybody&apos;s life journey tells a different story filled with ups and downs. Share, vent out
+                    your suck thumb moments—be they helpless, sad, or funny. Venting bottled frustrations or
+                    disappointments is a powerful way to destress here on suckthumb.com.
+                  </p>
+                  <p>
+                    Find encouragement, motivation, solace, and support from fellow users who have experienced
+                    similar suckthumb moments. Overcome life&apos;s roadblocks by learning from multiple perspectives on
+                    tackling a problem.
+                  </p>
+                  <p>
+                    A simple shift in thoughts may be the key to overcome our suckthumb moments. Let&apos;s all heal,
+                    laugh together, and bounce back stronger from these experiences.
+                  </p>
+                  <p className="font-medium text-foreground">It&apos;s free—give it a try.</p>
+                  <p>
+                    If you gained helpful insights to better your situation, pay it forward by helping others in the
+                    same way. <span role="img" aria-label="wink">😉</span>
+                  </p>
                 </div>
                 <Button
-                  className="mt-5 w-full"
+                  className="w-full"
                   variant="subtle"
                   onClick={() => {
                     document.getElementById('composer')?.scrollIntoView({ behavior: 'smooth' });
                   }}
                 >
-                  Start with a prompt
+                  Share your moment now
                 </Button>
               </div>
             )}
