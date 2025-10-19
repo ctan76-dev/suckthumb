@@ -41,7 +41,17 @@ export default function HomePage() {
   const [composerAlert, setComposerAlert] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const maskEmail = (email?: string | null) => {
+    if (!email || !email.includes('@')) return email ?? 'Anonymous';
+    const [user, domain] = email.split('@');
+    if (!domain) return 'Anonymous';
+    const visible = user.slice(0, 2);
+    const maskedUser = `${visible}${'•'.repeat(Math.max(0, Math.min(user.length - visible.length, 2)))}`;
+    return `${maskedUser}@${domain}`;
+  };
+
   const userEmail = session?.user.email ?? 'Guest';
+  const displayUserEmail = maskEmail(session?.user.email) ?? 'Guest';
   const avatarUrl = session?.user.user_metadata?.avatar_url as string | undefined;
   const userInitial = userEmail.charAt(0).toUpperCase();
   const fetchPosts = useCallback(async () => {
@@ -858,7 +868,7 @@ export default function HomePage() {
                             </div>
                             <div>
                               <p className="text-sm font-semibold text-foreground">
-                                {post.user_email || 'Anonymous'}
+                                {maskEmail(post.user_email)}
                               </p>
                               <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground">
                                 {moment(post.created_at).fromNow()}
@@ -1004,7 +1014,7 @@ export default function HomePage() {
                                 <div className="flex items-start justify-between gap-3">
                                   <div>
                                     <p className="text-sm font-semibold text-foreground">
-                                      {comment.user_email ?? 'Anonymous'}
+                                      {maskEmail(comment.user_email)}
                                     </p>
                                     <p className="mt-1 text-sm text-foreground/80">{comment.text}</p>
                                     <p className="mt-2 text-xs uppercase tracking-[0.3em] text-muted-foreground">
@@ -1063,7 +1073,7 @@ export default function HomePage() {
                     )}
                   </div>
                   <div>
-                    <p className="text-sm font-semibold text-foreground">{userEmail}</p>
+                    <p className="text-sm font-semibold text-foreground">{displayUserEmail}</p>
                     <p className="text-xs text-muted-foreground">Signed in • ready to share</p>
                   </div>
                 </div>

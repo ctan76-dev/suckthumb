@@ -22,6 +22,15 @@ export default function WallPage() {
   const [posts, setPosts] = useState<RankedPost[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const maskEmail = (email?: string | null) => {
+    if (!email || !email.includes('@')) return email ?? 'Anonymous';
+    const [user, domain] = email.split('@');
+    if (!domain) return 'Anonymous';
+    const visible = user.slice(0, 2);
+    const maskedUser = `${visible}${'•'.repeat(Math.max(0, Math.min(user.length - visible.length, 2)))}`;
+    return `${maskedUser}@${domain}`;
+  };
+
   useEffect(() => {
     const load = async () => {
       setLoading(true);
@@ -99,7 +108,7 @@ export default function WallPage() {
             >
               <header className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                  <p className="text-sm font-semibold text-foreground">{post.user_email || 'Anonymous'}</p>
+                  <p className="text-sm font-semibold text-foreground">{maskEmail(post.user_email)}</p>
                   <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground">
                     {moment(post.created_at).fromNow()}
                   </p>
