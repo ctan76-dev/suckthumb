@@ -534,33 +534,33 @@ export default function HomePage() {
   return (
     <div className="relative min-h-screen overflow-hidden">
       <div
-        className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(circle_at_top,_rgba(99,102,241,0.25),_transparent_55%)]"
+        className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(circle_at_top,_rgba(120,170,255,0.22),_transparent_55%)]"
         aria-hidden
       />
 
       <header className="sticky top-0 z-40 px-4 pt-4">
-        <div className="mx-auto flex max-w-6xl items-center justify-between rounded-full glass-surface px-5 py-3">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/15 text-base font-semibold text-primary ring-gradient">
+        <div className="mx-auto flex w-full max-w-6xl flex-col gap-3 rounded-2xl glass-surface px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:rounded-full sm:px-5">
+          <div className="flex items-center gap-3 sm:justify-start">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/15 text-base font-semibold text-primary ring-gradient sm:h-11 sm:w-11">
               ST
             </div>
-            <div>
-              <p className="text-xs uppercase tracking-[0.35em] text-primary/60">
+            <div className="text-center sm:text-left">
+              <p className="text-[0.65rem] uppercase tracking-[0.35em] text-primary/60 sm:text-xs">
                 Your daily vent space
               </p>
-              <span className="text-lg font-semibold tracking-tight text-foreground">
+              <span className="text-lg font-semibold tracking-tight text-foreground sm:text-xl">
                 SuckThumb
               </span>
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex w-full flex-wrap items-center justify-center gap-2 sm:w-auto sm:justify-end">
             {session ? (
               <>
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="hidden sm:inline-flex"
+                  className="order-3 hidden sm:order-none sm:inline-flex"
                   onClick={() => {
                     window.location.href = '/profile';
                   }}
@@ -570,6 +570,7 @@ export default function HomePage() {
                 <Button
                   variant="subtle"
                   size="sm"
+                  className="w-full sm:w-auto"
                   onClick={() => {
                     document.getElementById('composer')?.scrollIntoView({ behavior: 'smooth' });
                   }}
@@ -579,6 +580,7 @@ export default function HomePage() {
                 <Button
                   variant="destructive"
                   size="sm"
+                  className="w-full sm:w-auto"
                   onClick={async () => {
                     await supabase.auth.signOut();
                     window.location.href = '/auth';
@@ -601,17 +603,17 @@ export default function HomePage() {
         </div>
       </header>
 
-      <main className="relative z-10 mx-auto max-w-6xl px-4 pb-16 pt-6 lg:px-8">
+      <main className="relative z-10 mx-auto max-w-6xl px-4 pb-16 pt-4 sm:pt-6 lg:px-8">
         <div className="grid gap-8 lg:grid-cols-[minmax(0,2.3fr)_minmax(260px,1fr)]">
           <section className="space-y-6">
-            <div className="glass-surface overflow-hidden rounded-3xl border border-white/10 px-8 py-10 text-center shadow-2xl sm:text-left">
-              <p className="text-xs uppercase tracking-[0.5em] text-primary/70">
+            <div className="glass-surface overflow-hidden rounded-3xl border border-white/10 px-6 py-8 text-center shadow-2xl sm:px-8 sm:py-10 sm:text-left">
+              <p className="text-[0.65rem] uppercase tracking-[0.5em] text-primary/70 sm:text-xs">
                 Breathe it out
               </p>
-              <h1 className="mt-3 text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
+              <h1 className="mt-3 text-2xl font-semibold tracking-tight text-foreground sm:text-4xl">
                 Turn your rough day into a shared moment
               </h1>
-              <p className="mt-3 text-base text-muted-foreground sm:text-lg">
+              <p className="mt-3 text-sm text-muted-foreground sm:text-lg">
                 Rant, laugh, heal. This is your safe wall to feel better together.
               </p>
             </div>
@@ -619,12 +621,12 @@ export default function HomePage() {
             {session ? (
               <form
                 id="composer"
-                className="glass-surface rounded-3xl border border-white/20 p-6 shadow-xl sm:p-8"
+                className="glass-surface rounded-3xl border border-white/20 p-5 shadow-xl sm:p-8"
                 onSubmit={handleSubmit}
               >
                 <div className="flex flex-col gap-5 sm:flex-row">
                   <div className="relative shrink-0">
-                    <div className="ring-gradient flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-lg font-semibold text-primary">
+                    <div className="ring-gradient flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-lg font-semibold text-primary sm:h-14 sm:w-14">
                       {avatarUrl ? (
                         <NextImage
                           src={avatarUrl}
