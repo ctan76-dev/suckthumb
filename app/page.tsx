@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, FormEvent, useRef, useCallback, useMemo } from 'react';
+import { useState, useEffect, FormEvent, useRef, useCallback } from 'react';
 import NextImage from 'next/image';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -11,16 +11,8 @@ import { Trash, Edit, Heart, MessageCircle, X, Upload, Link as LinkIcon, File, I
 import { useSupabaseClient, useSession } from '@supabase/auth-helpers-react';
 import type { Database } from '@/types/supabase';
 
-type PostRow = Database['public']['Tables']['moments']['Row'];
+type Post = Database['public']['Tables']['moments']['Row'];
 type Comment = Database['public']['Tables']['comments']['Row'];
-type PostWithCounts = PostRow & {
-  comment_count: number;
-  like_count: number;
-};
-type PostRowWithAgg = PostRow & {
-  comments?: { count: number }[];
-  likes?: { count: number }[];
-};
 
 type MediaFile = {
   file: File;
@@ -32,7 +24,7 @@ type MediaFile = {
 export default function HomePage() {
   const supabase = useSupabaseClient<Database>();
   const session = useSession();
-  const [posts, setPosts] = useState<PostWithCounts[]>([]);
+  const [posts, setPosts] = useState<Post[]>([]);
   const [newPost, setNewPost] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [editingPost, setEditingPost] = useState<string | null>(null);
@@ -52,27 +44,11 @@ export default function HomePage() {
   const userEmail = session?.user.email ?? 'Guest';
   const avatarUrl = session?.user.user_metadata?.avatar_url as string | undefined;
   const userInitial = userEmail.charAt(0).toUpperCase();
-  const popularPosts = useMemo(() => {
-    return [...posts]
-      .sort((a, b) => {
-        if (b.comment_count !== a.comment_count) {
-          return b.comment_count - a.comment_count;
-        }
-        return (b.like_count ?? 0) - (a.like_count ?? 0);
-      })
-      .slice(0, 3);
-  }, [posts]);
-
-  const summarizeText = (value: string, words = 20) => {
-    const parts = value.trim().split(/\s+/);
-    if (parts.length <= words) return value;
-    return parts.slice(0, words).join(' ') + '…';
-  };
   const fetchPosts = useCallback(async () => {
     try {
       const { data, error } = await supabase
         .from('moments')
-        .select('*, comments(count), likes(count)')
+        .select('*')
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -80,19 +56,7 @@ export default function HomePage() {
         return;
       }
 
-      const mapped = (data ?? []).map((item) => {
-        const record = item as PostRowWithAgg;
-        const { comments: commentAgg, likes: likeAgg, ...rest } = record;
-        const commentCount = commentAgg?.[0]?.count ?? 0;
-        const likeCount = likeAgg?.[0]?.count ?? 0;
-        return {
-          ...rest,
-          comment_count: commentCount,
-          like_count: likeCount,
-        } as PostWithCounts;
-      });
-
-      setPosts(mapped);
+      setPosts(data ?? []);
     } catch (error) {
       console.error('Error fetching posts:', error);
     }
@@ -488,7 +452,7 @@ export default function HomePage() {
     }
   };
 
-  const startEdit = (post: PostWithCounts) => {
+  const startEdit = (post: Post) => {
     setEditingPost(post.id);
     setEditText(post.text);
   };
@@ -498,7 +462,7 @@ export default function HomePage() {
     setEditCommentText(comment.text);
   };
 
-  const renderMedia = (post: PostWithCounts) => {
+  const renderMedia = (post: Post) => {
     if (!post.media_url) return null;
 
     if (post.media_type === 'image') {
@@ -1137,41 +1101,24 @@ export default function HomePage() {
               </div>
             )}
 
-            <div className="glass-surface rounded-3xl border border-white/15 p-6 shadow-xl space-y-4">
-              <div>
-                <h3 className="text-base font-semibold text-foreground">Community vibes</h3>
-                <p className="mt-2 text-sm text-muted-foreground">
-                  Support others by reacting or leaving encouraging notes. We moderate so everyone feels safe.
-                </p>
-              </div>
-              <div className="space-y-3 text-sm">
-                {popularPosts.length > 0 ? (
-                  popularPosts.map(post => (
-                    <div
-                      key={post.id}
-                      className="rounded-2xl border border-white/10 bg-white/60 px-3 py-3"
-                    >
-                      <div className="flex items-center justify-between text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                        <span>{post.comment_count} comments</span>
-                        <span>{post.like_count} likes</span>
-                      </div>
-                      <p className="mt-2 text-sm font-semibold text-foreground">
-                        {post.user_email || 'Anonymous'}
-                      </p>
-                      <p className="mt-1 text-sm text-foreground/80">
-                        {summarizeText(post.text)}
-                      </p>
-                    </div>
-                  ))
-                ) : (
-                  <div className="rounded-2xl border border-white/10 bg-white/60 px-3 py-3 text-sm text-muted-foreground">
-                    No moments yet—share one to inspire the wall.
-                  </div>
-                )}
+            <div className="glass-surface rounded-3xl border border-white/15 p-6 shadow-xl">
+              <h3 className="text-base font-semibold text-foreground">Community vibes</h3>
+              <p className="mt-2 text-sm text-muted-foreground">
+                Support others by reacting or leaving encouraging notes. We moderate so everyone feels safe.
+              </p>
+              <div className="mt-4 space-y-3 text-sm text-muted-foreground">
+                <div className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/60 px-3 py-2">
+                  <Heart className="h-4 w-4 text-primary" />
+                  <span>Leave a ❤️ when something resonates.</span>
+                </div>
+                <div className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/60 px-3 py-2">
+                  <MessageCircle className="h-4 w-4 text-primary" />
+                  <span>Reply with empathy. People remember kind words.</span>
+                </div>
               </div>
               <Button
                 variant="ghost"
-                className="w-full text-primary"
+                className="mt-5 w-full text-primary"
                 onClick={() => (window.location.href = '/wall')}
               >
                 Explore the public wall →
