@@ -7,7 +7,7 @@ import remarkGfm from 'remark-gfm';
 import moment from 'moment';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Trash, Edit, Heart, MessageCircle, X, Upload, Link as LinkIcon, File, Image as ImageIcon, Video } from 'lucide-react';
+import { Trash, Edit, Heart, MessageCircle, X, Upload, Link as LinkIcon, File, Image as ImageIcon, Video, ThumbsUp } from 'lucide-react';
 import { useSupabaseClient, useSession } from '@supabase/auth-helpers-react';
 import type { Database } from '@/types/supabase';
 
@@ -540,16 +540,16 @@ export default function HomePage() {
 
       <header className="sticky top-0 z-40 px-3 pt-4 sm:px-4">
         <div className="mx-auto flex w-full max-w-6xl flex-col gap-3 rounded-2xl glass-surface px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:rounded-full sm:px-5">
-          <div className="flex items-center gap-3 sm:justify-start">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/15 text-base font-semibold text-primary ring-gradient sm:h-12 sm:w-12">
-              <Heart className="h-5 w-5" />
+          <div className="flex flex-col items-center gap-2 sm:flex-row sm:items-center sm:gap-3">
+            <div className="flex h-11 w-11 items-center justify-center rounded-full bg-primary/15 text-base text-primary ring-gradient pulse-slow sm:h-12 sm:w-12">
+              <ThumbsUp className="h-5 w-5" />
             </div>
             <div className="text-center sm:text-left">
               <p className="text-[0.65rem] uppercase tracking-[0.35em] text-primary/60 sm:text-xs">
                 Your daily vent space
               </p>
-              <span className="text-xl font-semibold tracking-tight text-foreground sm:text-2xl">
-                SuckThumb
+              <span className="text-2xl font-semibold tracking-tight text-foreground sm:text-[1.9rem]">
+                SUCKTHUMB
               </span>
             </div>
           </div>
