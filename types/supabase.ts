@@ -78,7 +78,7 @@ export interface Database {
           user_email: string | null;
           text: string;
           media_url: string | null;
-          media_type: 'image' | 'video' | 'file' | null;
+          media_type: 'image' | 'video' | 'file' | 'link' | null;
           likes: number;
           created_at: string;
         };
@@ -88,7 +88,7 @@ export interface Database {
           user_email?: string | null;
           text: string;
           media_url?: string | null;
-          media_type?: 'image' | 'video' | 'file' | null;
+          media_type?: 'image' | 'video' | 'file' | 'link' | null;
           likes?: number;
           created_at?: string;
         };
@@ -98,7 +98,7 @@ export interface Database {
           user_email?: string | null;
           text?: string;
           media_url?: string | null;
-          media_type?: 'image' | 'video' | 'file' | null;
+          media_type?: 'image' | 'video' | 'file' | 'link' | null;
           likes?: number;
           created_at?: string;
         };

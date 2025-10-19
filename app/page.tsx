@@ -11,25 +11,8 @@ import { Trash, Edit, Heart, MessageCircle, X, Upload, Link as LinkIcon, File, I
 import { useSupabaseClient, useSession } from '@supabase/auth-helpers-react';
 import type { Database } from '@/types/supabase';
 
-type Post = {
-  id: string;
-  text: string;
-  created_at: string;
-  likes: number;
-  user_id: string;
-  user_email?: string;
-  media_url?: string;
-  media_type?: string;
-};
-
-type Comment = {
-  id: string;
-  moment_id: string;
-  user_id: string;
-  user_email: string;
-  text: string;
-  created_at: string;
-};
+type Post = Database['public']['Tables']['moments']['Row'];
+type Comment = Database['public']['Tables']['comments']['Row'];
 
 type MediaFile = {
   file: File;
@@ -80,7 +63,7 @@ export default function HomePage() {
         return;
       }
 
-      setPosts(data || []);
+      setPosts(data ?? []);
     } catch (error) {
       console.error('Error fetching posts:', error);
     }
@@ -871,7 +854,7 @@ export default function HomePage() {
                             </div>
                           </div>
                           <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                            <span>{post.likes} likes</span>
+                            <span>{(post.likes ?? 0)} likes</span>
                             <span>•</span>
                             <span>{comments[post.id]?.length || 0} replies</span>
                           </div>
@@ -897,7 +880,7 @@ export default function HomePage() {
                           disabled={!session}
                         >
                           <Heart className={`h-4 w-4 ${isLiked ? 'fill-current' : ''}`} />
-                          {post.likes}
+                          {post.likes ?? 0}
                         </Button>
                         <Button
                           variant="ghost"
@@ -1009,7 +992,7 @@ export default function HomePage() {
                                 <div className="flex items-start justify-between gap-3">
                                   <div>
                                     <p className="text-sm font-semibold text-foreground">
-                                      {comment.user_email}
+                                      {comment.user_email ?? 'Anonymous'}
                                     </p>
                                     <p className="mt-1 text-sm text-foreground/80">{comment.text}</p>
                                     <p className="mt-2 text-xs uppercase tracking-[0.3em] text-muted-foreground">
