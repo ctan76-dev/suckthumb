@@ -1,10 +1,14 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { supabase } from '@/lib/supabase/client';
+import { useSupabaseClient } from '@supabase/auth-helpers-react';
+import type { Database } from '@/types/supabase';
+
+type MomentRow = Database['public']['Tables']['moments']['Row'];
 
 export default function TestPage() {
-  const [moments, setMoments] = useState<any[]>([]);
+  const supabase = useSupabaseClient<Database>();
+  const [moments, setMoments] = useState<MomentRow[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -19,7 +23,7 @@ export default function TestPage() {
     }
 
     fetchMoments();
-  }, []);
+  }, [supabase]);
 
   if (loading) return <p>Loading...</p>;
 

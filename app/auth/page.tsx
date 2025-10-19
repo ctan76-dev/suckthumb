@@ -4,9 +4,10 @@ import { useState, useEffect, FormEvent } from "react";
 import { useSupabaseClient, useSession } from "@supabase/auth-helpers-react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import type { Database } from "@/types/supabase";
 
 export default function AuthPage() {
-  const supabase = useSupabaseClient();
+  const supabase = useSupabaseClient<Database>();
   const session = useSession();
   const router = useRouter();
 
@@ -68,8 +69,11 @@ export default function AuthPage() {
     setLoading(true);
     setErrorMsg(null);
     setSuccessMsg(null);
+    const redirectTo = `${window.location.origin}/auth/callback?type=recovery&redirect=${encodeURIComponent(
+      `${window.location.origin}/update-password`
+    )}&email=${encodeURIComponent(email)}`;
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/update-password`,
+      redirectTo,
     });
     if (error) setErrorMsg(error.message);
     else setSuccessMsg("Password reset email sent! Please check your inbox.");

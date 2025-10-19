@@ -1,21 +1,18 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { supabase } from '@/lib/supabase/client';
 import moment from 'moment';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Trash } from 'lucide-react';
+import { useSupabaseClient } from '@supabase/auth-helpers-react';
+import type { Database } from '@/types/supabase';
 
-type Post = {
-  id: string;
-  text: string;
-  created_at: string;
-  likes: number;
-};
+type MomentRow = Database['public']['Tables']['moments']['Row'];
 
 export default function HomePage() {
-  const [posts, setPosts] = useState<Post[]>([]);
+  const supabase = useSupabaseClient<Database>();
+  const [posts, setPosts] = useState<MomentRow[]>([]);
   const [newPost, setNewPost] = useState('');
 
   // 1) Fetch posts on mount (no async arrow directly in useEffect)
@@ -26,10 +23,10 @@ export default function HomePage() {
         .select('*')
         .order('created_at', { ascending: false });
       if (error) console.error('Error loading posts:', error);
-      else setPosts(data as Post[]);
+      else setPosts((data ?? []) as MomentRow[]);
     };
     load();
-  }, []);
+  }, [supabase]);
 
   // 2) Add a new moment
   const handleSubmit = async () => {
@@ -45,7 +42,7 @@ export default function HomePage() {
         .from('moments')
         .select('*')
         .order('created_at', { ascending: false });
-      setPosts(data as Post[]);
+      setPosts((data ?? []) as MomentRow[]);
     }
   };
 
@@ -55,7 +52,9 @@ export default function HomePage() {
     if (error) console.error('Error liking post:', error);
     else {
       setPosts((prev) =>
-        prev.map((p) => (p.id === id ? { ...p, likes: p.likes + 1 } : p))
+        prev.map((p) =>
+          p.id === id ? { ...p, likes: (p.likes ?? 0) + 1 } : p
+        )
       );
     }
   };
