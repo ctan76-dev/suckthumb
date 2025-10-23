@@ -40,6 +40,7 @@ export default function HomePage() {
   const [showMediaOptions, setShowMediaOptions] = useState(false);
   const [composerAlert, setComposerAlert] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [shareMenuPost, setShareMenuPost] = useState<string | null>(null);
 
   const maskEmail = (email?: string | null) => {
     if (!email || !email.includes('@')) return email ?? 'Anonymous';
@@ -135,30 +136,68 @@ export default function HomePage() {
     });
   };
 
+  const getSharePayload = (post: Post) => {
+    const shareText = post.text.length > 200 ? `${post.text.slice(0, 200)}…` : post.text;
+    const origin = typeof window !== 'undefined' ? window.location.origin : '';
+    const url = typeof window !== 'undefined' ? `${origin}/wall#post-${post.id}` : origin;
+    return { shareText, url };
+  };
+
   const handleShare = async (post: Post) => {
-    const shareText = post.text.length > 140 ? `${post.text.slice(0, 140)}…` : post.text;
-    const shareUrl = typeof window !== 'undefined' ? `${window.location.origin}/` : '';
+    const { shareText, url } = getSharePayload(post);
 
     if (navigator.share) {
       try {
-        await navigator.share({
-          title: 'SuckThumb Moment',
-          text: shareText,
-          url: shareUrl,
-        });
+        await navigator.share({ title: 'SuckThumb Moment', text: shareText, url });
+        return;
       } catch (error) {
-        if ((error as Error).name !== 'AbortError') {
-          console.error('Share failed:', error);
-        }
+        if ((error as Error).name === 'AbortError') return;
+        console.error('Share failed:', error);
       }
-    } else if (navigator.clipboard) {
+    }
+
+    setShareMenuPost(prev => (prev === post.id ? null : post.id));
+
+    if (navigator.clipboard) {
       try {
-        await navigator.clipboard.writeText(`${shareText}\n${shareUrl}`);
+        await navigator.clipboard.writeText(`${shareText}\n${url}`);
         setComposerAlert({ type: 'success', message: 'Moment copied to clipboard. Share it anywhere!' });
       } catch (error) {
         console.error('Clipboard copy failed:', error);
         setComposerAlert({ type: 'error', message: 'Unable to copy moment. Please try again.' });
       }
+    }
+  };
+
+  const handleShareOption = (post: Post, option: 'whatsapp' | 'telegram' | 'facebook' | 'x' | 'copy') => {
+    const { shareText, url } = getSharePayload(post);
+    const message = `${shareText}\n${url}`;
+
+    if (option === 'copy' && navigator.clipboard) {
+      navigator.clipboard
+        .writeText(message)
+        .then(() => setComposerAlert({ type: 'success', message: 'Link copied to clipboard.' }))
+        .catch(() => setComposerAlert({ type: 'error', message: 'Unable to copy link.' }));
+      return;
+    }
+
+    const targetUrl = (() => {
+      switch (option) {
+        case 'whatsapp':
+          return `https://wa.me/?text=${encodeURIComponent(message)}`;
+        case 'telegram':
+          return `https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(shareText)}`;
+        case 'facebook':
+          return `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`;
+        case 'x':
+          return `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(url)}`;
+        default:
+          return '';
+      }
+    })();
+
+    if (targetUrl) {
+      window.open(targetUrl, '_blank', 'noopener,noreferrer');
     }
   };
 
@@ -972,6 +1011,26 @@ export default function HomePage() {
                         </div>
                       )}
                     </div>
+
+                    {shareMenuPost === post.id && (
+                      <div className="mt-3 flex flex-wrap gap-2 rounded-2xl border border-white/10 bg-white/70 px-3 py-3">
+                        <Button variant="outline" size="sm" onClick={() => handleShareOption(post, 'copy')}>
+                          Copy link
+                        </Button>
+                        <Button variant="outline" size="sm" onClick={() => handleShareOption(post, 'whatsapp')}>
+                          WhatsApp
+                        </Button>
+                        <Button variant="outline" size="sm" onClick={() => handleShareOption(post, 'telegram')}>
+                          Telegram
+                        </Button>
+                        <Button variant="outline" size="sm" onClick={() => handleShareOption(post, 'facebook')}>
+                          Facebook
+                        </Button>
+                        <Button variant="outline" size="sm" onClick={() => handleShareOption(post, 'x')}>
+                          X (Twitter)
+                        </Button>
+                      </div>
+                    )}
 
                     {showComments.has(post.id) && (
                       <div className="mt-5 space-y-4 rounded-2xl border border-white/10 bg-white/60 p-4">
