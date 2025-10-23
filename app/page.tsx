@@ -135,6 +135,33 @@ export default function HomePage() {
     });
   };
 
+  const handleShare = async (post: Post) => {
+    const shareText = post.text.length > 140 ? `${post.text.slice(0, 140)}…` : post.text;
+    const shareUrl = typeof window !== 'undefined' ? `${window.location.origin}/` : '';
+
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: 'SuckThumb Moment',
+          text: shareText,
+          url: shareUrl,
+        });
+      } catch (error) {
+        if ((error as Error).name !== 'AbortError') {
+          console.error('Share failed:', error);
+        }
+      }
+    } else if (navigator.clipboard) {
+      try {
+        await navigator.clipboard.writeText(`${shareText}\n${shareUrl}`);
+        setComposerAlert({ type: 'success', message: 'Moment copied to clipboard. Share it anywhere!' });
+      } catch (error) {
+        console.error('Clipboard copy failed:', error);
+        setComposerAlert({ type: 'error', message: 'Unable to copy moment. Please try again.' });
+      }
+    }
+  };
+
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
     if (!files) return;
@@ -912,6 +939,15 @@ export default function HomePage() {
                         >
                           <MessageCircle className="h-4 w-4" />
                           {comments[post.id]?.length || 0}
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="gap-2 text-foreground/80"
+                          onClick={() => handleShare(post)}
+                        >
+                          <LinkIcon className="h-4 w-4" />
+                          Share
                         </Button>
                       </div>
 
