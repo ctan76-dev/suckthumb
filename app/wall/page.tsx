@@ -102,9 +102,10 @@ export default function WallPage() {
   }, [posts]);
 
   const getSharePayload = (post: RankedPost) => {
+    const postId = String(post.id);
     const shareText = post.text.length > 200 ? `${post.text.slice(0, 200)}…` : post.text;
     const origin = typeof window !== "undefined" ? window.location.origin : "";
-    const url = typeof window !== "undefined" ? `${origin}/wall#post-${post.id}` : origin;
+    const url = typeof window !== "undefined" ? `${origin}/wall/${postId}` : origin;
     return { shareText, url };
   };
 
