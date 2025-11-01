@@ -14,6 +14,14 @@ import type { Database } from '@/types/supabase';
 type Post = Database['public']['Tables']['moments']['Row'];
 type Comment = Database['public']['Tables']['comments']['Row'];
 
+type PostWithCounts = Post & {
+  comment_count: number;
+};
+
+type PostQueryResult = Post & {
+  comments: { count: number }[];
+};
+
 type MediaFile = {
   file: File;
   preview: string;
@@ -24,7 +32,7 @@ type MediaFile = {
 export default function HomePage() {
   const supabase = useSupabaseClient<Database>();
   const session = useSession();
-  const [posts, setPosts] = useState<Post[]>([]);
+  const [posts, setPosts] = useState<PostWithCounts[]>([]);
   const [newPost, setNewPost] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [editingPost, setEditingPost] = useState<string | null>(null);
@@ -59,7 +67,7 @@ export default function HomePage() {
     try {
       const { data, error } = await supabase
         .from('moments')
-        .select('*')
+        .select('*, comments(count)')
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -67,7 +75,13 @@ export default function HomePage() {
         return;
       }
 
-      setPosts(data ?? []);
+      const postsWithCounts =
+        (data as PostQueryResult[] | null)?.map(({ comments, ...post }) => ({
+          ...post,
+          comment_count: comments?.[0]?.count ?? 0,
+        })) ?? [];
+
+      setPosts(postsWithCounts);
     } catch (error) {
       console.error('Error fetching posts:', error);
     }
@@ -114,10 +128,16 @@ export default function HomePage() {
         return;
       }
 
+      const commentList = data ?? [];
+
       setComments(prev => ({
         ...prev,
-        [postId]: data || [],
+        [postId]: commentList,
       }));
+
+      setPosts(prev =>
+        prev.map(post => (post.id === postId ? { ...post, comment_count: commentList.length } : post)),
+      );
     } catch (error) {
       console.error('Error fetching comments:', error);
     }
@@ -895,6 +915,7 @@ export default function HomePage() {
                 const postInitial = (post.user_email ?? 'Anonymous').charAt(0).toUpperCase();
                 const isOwner = session && post.user_id === session.user.id;
                 const isLiked = userLikes.has(post.id);
+                const commentCount = comments[post.id]?.length ?? post.comment_count ?? 0;
 
                 return (
                   <div key={post.id} className="glass-surface rounded-3xl border border-white/10 px-5 py-6 shadow-xl">
@@ -944,7 +965,7 @@ export default function HomePage() {
                           <div className="flex items-center gap-2 text-xs text-muted-foreground">
                             <span>{(post.likes ?? 0)} likes</span>
                             <span>•</span>
-                            <span>{comments[post.id]?.length || 0} replies</span>
+                            <span>{commentCount} replies</span>
                           </div>
                         </div>
 
@@ -977,7 +998,7 @@ export default function HomePage() {
                           onClick={() => toggleComments(post.id)}
                         >
                           <MessageCircle className="h-4 w-4" />
-                          {comments[post.id]?.length || 0}
+                          {commentCount}
                         </Button>
                         <Button
                           variant="ghost"
@@ -1037,7 +1058,7 @@ export default function HomePage() {
                         <div className="flex items-center justify-between">
                           <h4 className="text-sm font-semibold text-foreground">Conversation</h4>
                           <span className="text-xs uppercase tracking-[0.3em] text-muted-foreground">
-                            {comments[post.id]?.length || 0} replies
+                            {commentCount} replies
                           </span>
                         </div>
 
